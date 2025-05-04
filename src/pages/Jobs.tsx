@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,8 +24,9 @@ import {
   FilePlus,
   FileText,
   StopCircle,
+  ListFilter
 } from "lucide-react";
-import { Job, JobStatus, mockJobs, getClientById, getServiceById } from "@/data/mockData";
+import { Job, JobStatus, mockJobs, getClientById, getServiceById, mockStaff } from "@/data/mockData";
 import { getInitials } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -47,18 +48,158 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
+import { FilterState, SavedView } from "@/types/JobsFilterState";
+import JobsAdvancedFilters from "@/components/jobs/JobsAdvancedFilters";
+import JobsViewModeSwitch, { ViewMode } from "@/components/jobs/JobsViewModeSwitch";
+import JobsCalendarView from "@/components/jobs/JobsCalendarView";
 
 const Jobs = () => {
-  const [filter, setFilter] = useState<JobStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isCheckInDialogOpen, setIsCheckInDialogOpen] = useState(false);
   const [isCheckOutDialogOpen, setIsCheckOutDialogOpen] = useState(false);
   const [isAddNotesDialogOpen, setIsAddNotesDialogOpen] = useState(false);
   
-  // Filter jobs based on status
-  const filteredJobs = filter === 'all' 
-    ? mockJobs 
-    : mockJobs.filter(job => job.status === filter);
+  // New state for advanced filtering
+  const [advancedFilters, setAdvancedFilters] = useState<FilterState>({
+    status: 'all',
+    dateRange: { start: null, end: null },
+    staffIds: [],
+    serviceIds: [],
+    clientName: '',
+    zipCode: '',
+    hasNotes: false,
+    needsFollowUp: false,
+    unassigned: false,
+  });
+  
+  // State for saved views
+  const [savedViews, setSavedViews] = useState<SavedView[]>([
+    {
+      id: 'today-jobs',
+      name: 'Today\'s Jobs',
+      filters: {
+        ...advancedFilters,
+        dateRange: {
+          start: new Date(),
+          end: new Date(),
+        },
+      },
+    },
+    {
+      id: 'this-week',
+      name: 'This Week',
+      filters: {
+        ...advancedFilters,
+      },
+    },
+  ]);
+  
+  // View mode state (list, calendar, map)
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  
+  // Apply status filter changes to advanced filters
+  useEffect(() => {
+    setAdvancedFilters(prev => ({
+      ...prev,
+      status: statusFilter,
+    }));
+  }, [statusFilter]);
+  
+  // Filter jobs based on all filter criteria
+  const getFilteredJobs = () => {
+    return mockJobs.filter(job => {
+      // Status filter
+      if (advancedFilters.status !== 'all' && job.status !== advancedFilters.status) {
+        return false;
+      }
+      
+      // Date range filter
+      if (advancedFilters.dateRange.start && advancedFilters.dateRange.end) {
+        const jobDate = new Date(job.date);
+        const startDate = new Date(advancedFilters.dateRange.start);
+        const endDate = new Date(advancedFilters.dateRange.end);
+        
+        // Reset time parts for accurate date comparison
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(23, 59, 59, 999);
+        
+        if (jobDate < startDate || jobDate > endDate) {
+          return false;
+        }
+      }
+      
+      // Staff filter
+      if (advancedFilters.staffIds.length > 0) {
+        const jobStaffIds = job.assignedStaffIds || [];
+        if (!jobStaffIds.some(id => advancedFilters.staffIds.includes(id))) {
+          return false;
+        }
+      }
+      
+      // Unassigned filter
+      if (advancedFilters.unassigned) {
+        const jobStaffIds = job.assignedStaffIds || [];
+        if (jobStaffIds.length > 0) {
+          return false;
+        }
+      }
+      
+      // Service filter
+      if (advancedFilters.serviceIds.length > 0 && !advancedFilters.serviceIds.includes(job.serviceId)) {
+        return false;
+      }
+      
+      // Client name filter
+      if (advancedFilters.clientName && !job.clientName.toLowerCase().includes(advancedFilters.clientName.toLowerCase())) {
+        return false;
+      }
+      
+      // Zip code filter
+      if (advancedFilters.zipCode && (!job.address.zipCode || !job.address.zipCode.includes(advancedFilters.zipCode))) {
+        return false;
+      }
+      
+      // Has notes filter
+      if (advancedFilters.hasNotes && (!job.notes || job.notes.length === 0)) {
+        return false;
+      }
+      
+      // Needs follow-up filter
+      if (advancedFilters.needsFollowUp && !job.needsFollowUp) {
+        return false;
+      }
+      
+      return true;
+    });
+  };
+  
+  const filteredJobs = getFilteredJobs();
+  
+  const handleApplyFilters = (newFilters: FilterState) => {
+    setAdvancedFilters(newFilters);
+    setStatusFilter(newFilters.status);
+  };
+  
+  const handleSaveView = (view: SavedView) => {
+    setSavedViews([...savedViews, view]);
+    toast({
+      title: "View saved",
+      description: `"${view.name}" has been saved to your views.`,
+    });
+  };
+  
+  const handleSelectView = (viewId: string) => {
+    const view = savedViews.find(v => v.id === viewId);
+    if (view) {
+      setAdvancedFilters(view.filters);
+      setStatusFilter(view.filters.status);
+      toast({
+        title: "View loaded",
+        description: `"${view.name}" view has been applied.`,
+      });
+    }
+  };
   
   const handleStatusChange = (job: Job, newStatus: JobStatus) => {
     // In a real app, this would update the job status in the database
@@ -100,79 +241,129 @@ const Jobs = () => {
     setIsAddNotesDialogOpen(false);
   };
 
+  // Render the appropriate view based on viewMode
+  const renderJobsView = () => {
+    switch (viewMode) {
+      case "calendar":
+        return (
+          <JobsCalendarView 
+            jobs={filteredJobs} 
+            filters={advancedFilters}
+            onSelectJob={setSelectedJob}
+          />
+        );
+      case "map":
+        return (
+          <div className="flex items-center justify-center h-[400px] bg-muted/30 rounded-lg">
+            <div className="text-center">
+              <MapPin className="h-10 w-10 mx-auto text-muted" />
+              <h3 className="mt-2 text-lg font-medium">Map View</h3>
+              <p className="text-muted-foreground">
+                Map integration is coming soon!
+              </p>
+            </div>
+          </div>
+        );
+      case "list":
+      default:
+        return (
+          <Tabs defaultValue="all" value={statusFilter} onValueChange={(value) => setStatusFilter(value as JobStatus | 'all')}>
+            <TabsList className="grid grid-cols-5 w-full">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
+              <TabsTrigger value="in-progress">In Progress</TabsTrigger>
+              <TabsTrigger value="completed">Completed</TabsTrigger>
+              <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="all" className="mt-6">
+              <JobsList 
+                jobs={filteredJobs} 
+                onSelectJob={setSelectedJob} 
+                onChangeStatus={handleStatusChange}
+                onCheckIn={() => setIsCheckInDialogOpen(true)}
+                onCheckOut={() => setIsCheckOutDialogOpen(true)}
+                onAddNotes={() => setIsAddNotesDialogOpen(true)}
+              />
+            </TabsContent>
+            
+            <TabsContent value="scheduled" className="mt-6">
+              <JobsList 
+                jobs={filteredJobs} 
+                onSelectJob={setSelectedJob} 
+                onChangeStatus={handleStatusChange}
+                onCheckIn={() => setIsCheckInDialogOpen(true)}
+                onCheckOut={() => setIsCheckOutDialogOpen(true)}
+                onAddNotes={() => setIsAddNotesDialogOpen(true)}
+              />
+            </TabsContent>
+            
+            <TabsContent value="in-progress" className="mt-6">
+              <JobsList 
+                jobs={filteredJobs} 
+                onSelectJob={setSelectedJob} 
+                onChangeStatus={handleStatusChange}
+                onCheckIn={() => setIsCheckInDialogOpen(true)}
+                onCheckOut={() => setIsCheckOutDialogOpen(true)}
+                onAddNotes={() => setIsAddNotesDialogOpen(true)}
+              />
+            </TabsContent>
+            
+            <TabsContent value="completed" className="mt-6">
+              <JobsList 
+                jobs={filteredJobs} 
+                onSelectJob={setSelectedJob} 
+                onChangeStatus={handleStatusChange}
+                onCheckIn={() => setIsCheckInDialogOpen(true)}
+                onCheckOut={() => setIsCheckOutDialogOpen(true)}
+                onAddNotes={() => setIsAddNotesDialogOpen(true)}
+              />
+            </TabsContent>
+            
+            <TabsContent value="cancelled" className="mt-6">
+              <JobsList 
+                jobs={filteredJobs} 
+                onSelectJob={setSelectedJob} 
+                onChangeStatus={handleStatusChange}
+                onCheckIn={() => setIsCheckInDialogOpen(true)}
+                onCheckOut={() => setIsCheckOutDialogOpen(true)}
+                onAddNotes={() => setIsAddNotesDialogOpen(true)}
+              />
+            </TabsContent>
+          </Tabs>
+        );
+    }
+  };
+
   return (
     <div className="space-y-6 py-6 animate-fade-in">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Job Tracking</h1>
-        <p className="text-muted-foreground">
-          Manage and track your cleaning jobs.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Job Tracking</h1>
+          <p className="text-muted-foreground">
+            Manage and track your cleaning jobs.
+          </p>
+        </div>
+        <Button>
+          <FilePlus className="mr-2 h-4 w-4" />
+          Add New Job
+        </Button>
       </div>
-
-      <Tabs defaultValue="all" value={filter} onValueChange={(value) => setFilter(value as JobStatus | 'all')}>
-        <TabsList className="grid grid-cols-5 w-full">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-          <TabsTrigger value="in-progress">In Progress</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-6">
-          <JobsList 
-            jobs={filteredJobs} 
-            onSelectJob={setSelectedJob} 
-            onChangeStatus={handleStatusChange}
-            onCheckIn={() => setIsCheckInDialogOpen(true)}
-            onCheckOut={() => setIsCheckOutDialogOpen(true)}
-            onAddNotes={() => setIsAddNotesDialogOpen(true)}
-          />
-        </TabsContent>
-        
-        <TabsContent value="scheduled" className="mt-6">
-          <JobsList 
-            jobs={filteredJobs} 
-            onSelectJob={setSelectedJob} 
-            onChangeStatus={handleStatusChange}
-            onCheckIn={() => setIsCheckInDialogOpen(true)}
-            onCheckOut={() => setIsCheckOutDialogOpen(true)}
-            onAddNotes={() => setIsAddNotesDialogOpen(true)}
-          />
-        </TabsContent>
-        
-        <TabsContent value="in-progress" className="mt-6">
-          <JobsList 
-            jobs={filteredJobs} 
-            onSelectJob={setSelectedJob} 
-            onChangeStatus={handleStatusChange}
-            onCheckIn={() => setIsCheckInDialogOpen(true)}
-            onCheckOut={() => setIsCheckOutDialogOpen(true)}
-            onAddNotes={() => setIsAddNotesDialogOpen(true)}
-          />
-        </TabsContent>
-        
-        <TabsContent value="completed" className="mt-6">
-          <JobsList 
-            jobs={filteredJobs} 
-            onSelectJob={setSelectedJob} 
-            onChangeStatus={handleStatusChange}
-            onCheckIn={() => setIsCheckInDialogOpen(true)}
-            onCheckOut={() => setIsCheckOutDialogOpen(true)}
-            onAddNotes={() => setIsAddNotesDialogOpen(true)}
-          />
-        </TabsContent>
-        
-        <TabsContent value="cancelled" className="mt-6">
-          <JobsList 
-            jobs={filteredJobs} 
-            onSelectJob={setSelectedJob} 
-            onChangeStatus={handleStatusChange}
-            onCheckIn={() => setIsCheckInDialogOpen(true)}
-            onCheckOut={() => setIsCheckOutDialogOpen(true)}
-            onAddNotes={() => setIsAddNotesDialogOpen(true)}
-          />
-        </TabsContent>
-      </Tabs>
+      
+      {/* Advanced Filters */}
+      <JobsAdvancedFilters
+        filters={advancedFilters}
+        onApplyFilters={handleApplyFilters}
+        savedViews={savedViews}
+        onSaveView={handleSaveView}
+        onSelectView={handleSelectView}
+      />
+      
+      {/* View Mode Switch */}
+      <JobsViewModeSwitch activeView={viewMode} onViewChange={setViewMode} />
+      
+      {/* Jobs View (List, Calendar, or Map) */}
+      {renderJobsView()}
       
       {/* Check In Dialog */}
       <Dialog open={isCheckInDialogOpen} onOpenChange={setIsCheckInDialogOpen}>
@@ -389,6 +580,17 @@ const JobCard: React.FC<JobCardProps> = ({
   
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   
+  // Get the assigned staff for this job
+  const getAssignedStaff = () => {
+    if (!job.assignedStaffIds || job.assignedStaffIds.length === 0) {
+      return [];
+    }
+    
+    return mockStaff.filter(staff => job.assignedStaffIds.includes(staff.id));
+  };
+  
+  const assignedStaff = getAssignedStaff();
+  
   const handleStatusAction = (status: JobStatus) => {
     onChangeStatus(job, status);
   };
@@ -458,6 +660,33 @@ const JobCard: React.FC<JobCardProps> = ({
               {job.address.street}, {job.address.city}, {job.address.state} {job.address.zipCode}
             </span>
           </div>
+
+          {/* Show assigned staff avatars */}
+          {assignedStaff.length > 0 && (
+            <div className="flex items-center mt-2">
+              <div className="flex -space-x-2 mr-2">
+                {assignedStaff.slice(0, 3).map((staff) => (
+                  <Avatar key={staff.id} className="border-2 border-background h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      {getInitials(staff.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {assignedStaff.length > 3 && (
+                  <Avatar className="border-2 border-background h-6 w-6">
+                    <AvatarFallback className="text-xs">
+                      +{assignedStaff.length - 3}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground">
+                {assignedStaff.length === 1 
+                  ? "1 staff assigned" 
+                  : `${assignedStaff.length} staff assigned`}
+              </span>
+            </div>
+          )}
           
           {isDetailsOpen && (
             <div className="mt-4 space-y-4 border-t pt-4">
