@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,11 +84,9 @@ import {
   UserX,
   UserCheck,
   Printer,
-  Eye,
-  ChevronDown,
+  CircleDot,
   Columns3,
   MoveVertical,
-  CircleDot,
   Import,
   FileText as FileIcon,
   SearchCode,
@@ -121,6 +120,25 @@ export type ClientColumn =
   | "clientSince"
   | "assignedStaff";
 
+// Define the client form schema
+const clientFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  type: z.enum(["residential", "commercial"]),
+  contactName: z.string().min(2, { message: "Contact name is required." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  phone: z.string().min(10, { message: "Phone number is required." }),
+  street: z.string().min(5, { message: "Street address is required." }),
+  city: z.string().min(2, { message: "City is required." }),
+  state: z.string().min(2, { message: "State is required." }),
+  zipCode: z.string().min(5, { message: "Zip code is required." }),
+  tags: z.string().optional(),
+  status: z.enum(["lead", "prospect", "active", "on-hold", "inactive", "lost"]),
+  notes: z.string().optional(),
+});
+
+// Define the client form values type
+type ClientFormValues = z.infer<typeof clientFormSchema>;
+
 const Clients = () => {
   const { toast } = useToast();
   const [filterType, setFilterType] = useState<ClientType | "all">("all");
@@ -133,6 +151,15 @@ const Clients = () => {
   const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<ClientStatus>("active");
   const [localClients, setLocalClients] = useState(mockClients);
+  
+  // Function to handle status change
+  const handleStatusChange = (status: ClientStatus) => {
+    setSelectedStatus(status);
+    toast({
+      title: "Status changed",
+      description: `Client status updated to ${status}`,
+    });
+  };
   
   // Form for adding new client
   const form = useForm<ClientFormValues>({
@@ -307,6 +334,8 @@ const Clients = () => {
       ],
       tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
       lastService: null,
+      notes: data.notes || "",
+      createdAt: new Date().toISOString(),
     };
     
     // Add the new client to the local state
@@ -1023,7 +1052,7 @@ const ClientList: React.FC<ClientListProps> = ({
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link
                           to={`/clients/${client.id}`}
                           className="flex items-center w-full"
