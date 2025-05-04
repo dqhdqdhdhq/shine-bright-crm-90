@@ -1,4 +1,3 @@
-
 // Client Types
 export type ClientType = 'residential' | 'commercial';
 
@@ -86,6 +85,7 @@ export interface Job {
   recurring?: 'none' | 'daily' | 'weekly' | 'biweekly' | 'monthly';
   checkinTime?: string;
   checkoutTime?: string;
+  needsFollowUp?: boolean;
 }
 
 // Mock Data
@@ -502,6 +502,7 @@ export const mockJobs: Job[] = [
     address: mockClients[0].addresses[0],
     notes: 'Focus on kitchen and living room area.',
     recurring: 'weekly',
+    needsFollowUp: true,
   },
   {
     id: '2',
@@ -517,6 +518,7 @@ export const mockJobs: Job[] = [
     address: mockClients[1].addresses[0],
     notes: 'Security will provide access. Ensure all lights are turned off when leaving.',
     recurring: 'daily',
+    needsFollowUp: false,
   },
   {
     id: '3',
@@ -533,6 +535,7 @@ export const mockJobs: Job[] = [
     checkinTime: '13:05',
     notes: 'Client wants extra attention to guest room as visitors are coming.',
     recurring: 'none',
+    needsFollowUp: false,
   },
   {
     id: '4',
@@ -550,6 +553,7 @@ export const mockJobs: Job[] = [
     checkoutTime: '23:15',
     notes: 'Use the specialized disinfectant for all surfaces in procedure rooms.',
     recurring: 'weekly',
+    needsFollowUp: false,
   },
   {
     id: '5',
@@ -565,6 +569,7 @@ export const mockJobs: Job[] = [
     address: mockClients[4].addresses[0],
     notes: 'Cancelled by client - family emergency. Reschedule for next week.',
     recurring: 'monthly',
+    needsFollowUp: true,
   },
   {
     id: '6',
@@ -580,6 +585,7 @@ export const mockJobs: Job[] = [
     address: mockClients[0].addresses[0],
     notes: 'Focus on kitchen and living room area.',
     recurring: 'weekly',
+    needsFollowUp: false,
   },
   {
     id: '7',
@@ -595,6 +601,7 @@ export const mockJobs: Job[] = [
     address: mockClients[2].addresses[0],
     notes: 'Use the client-provided cleaning products in laundry room.',
     recurring: 'biweekly',
+    needsFollowUp: false,
   },
 ];
 
