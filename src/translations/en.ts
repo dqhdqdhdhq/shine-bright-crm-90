@@ -1,4 +1,3 @@
-
 export const en = {
   // Common
   "app.title": "Cleaning Management",
@@ -12,6 +11,7 @@ export const en = {
   "nav.schedule": "Schedule",
   "nav.jobs": "Jobs",
   "nav.settings": "Settings",
+  "nav.finance": "Finance", // Added financial hub navigation
   
   // Clients page
   "clients.title": "Client Management",
@@ -192,5 +192,99 @@ export const en = {
   "schedule.availability": "Staff Availability",
   "schedule.hours": "Working Hours",
   "schedule.timeoff": "Time Off",
-  "schedule.recurring": "Recurring Schedule"
+  "schedule.recurring": "Recurring Schedule",
+  
+  // Financial hub
+  "finance.title": "Financial Hub",
+  "finance.dashboard": "Financial Dashboard",
+  "finance.invoicing": "Invoicing & Receivables",
+  "finance.expenses": "Expenses & Payables",
+  "finance.payroll": "Payroll",
+  "finance.assets": "Equipment & Assets",
+  "finance.taxes": "Tax Center",
+  "finance.reports": "Reports & Analytics",
+  
+  // Financial dashboard
+  "finance.dashboard.customize": "Customize Dashboard",
+  "finance.dashboard.profitLoss": "Profit & Loss",
+  "finance.dashboard.cashFlow": "Cash Flow",
+  "finance.dashboard.receivables": "Accounts Receivable",
+  "finance.dashboard.payables": "Accounts Payable",
+  "finance.dashboard.ratios": "Financial Ratios",
+  "finance.dashboard.revenueVsExpenses": "Revenue vs Expenses",
+  "finance.dashboard.topExpenses": "Top Expenses",
+  "finance.dashboard.taxDeadlines": "Tax Deadlines",
+  "finance.dashboard.payrollSummary": "Payroll Summary",
+  "finance.dashboard.period.mtd": "Month to Date",
+  "finance.dashboard.period.qtd": "Quarter to Date",
+  "finance.dashboard.period.ytd": "Year to Date",
+  "finance.dashboard.period.custom": "Custom Period",
+  "finance.dashboard.alerts": "Financial Alerts",
+  
+  // Invoicing & Receivables
+  "finance.invoicing.create": "Create Invoice",
+  "finance.invoicing.all": "All Invoices",
+  "finance.invoicing.drafts": "Draft Invoices",
+  "finance.invoicing.sent": "Sent Invoices",
+  "finance.invoicing.paid": "Paid Invoices",
+  "finance.invoicing.overdue": "Overdue Invoices",
+  "finance.invoicing.templates": "Invoice Templates",
+  "finance.invoicing.recurring": "Recurring Invoices",
+  "finance.invoicing.payments": "Payment Tracking",
+  "finance.invoicing.reminders": "Payment Reminders",
+  "finance.invoicing.aging": "A/R Aging Report",
+  "finance.invoicing.taxes": "Sales Tax Tracking",
+  "finance.invoicing.credit": "Credit Notes",
+  "finance.invoicing.statements": "Customer Statements",
+  
+  // Expenses & Payables
+  "finance.expenses.add": "Add Expense",
+  "finance.expenses.all": "All Expenses",
+  "finance.expenses.recurring": "Recurring Expenses",
+  "finance.expenses.categories": "Expense Categories",
+  "finance.expenses.vendors": "Vendor Management",
+  "finance.expenses.bills": "Bill Payment",
+  "finance.expenses.aging": "A/P Aging Report",
+  "finance.expenses.receipts": "Receipt Management",
+  "finance.expenses.bankFeed": "Bank Feed",
+  
+  // Payroll
+  "finance.payroll.employees": "Employee Profiles",
+  "finance.payroll.timeTracking": "Time Tracking",
+  "finance.payroll.calculate": "Calculate Payroll",
+  "finance.payroll.paystubs": "Paystubs",
+  "finance.payroll.history": "Payroll History",
+  "finance.payroll.taxes": "Payroll Taxes",
+  "finance.payroll.contractors": "Contractor Payments",
+  "finance.payroll.reports": "Payroll Reports",
+  
+  // Equipment & Assets
+  "finance.assets.register": "Asset Register",
+  "finance.assets.purchase": "Purchase Details",
+  "finance.assets.depreciation": "Depreciation",
+  "finance.assets.maintenance": "Maintenance Log",
+  "finance.assets.assignment": "Asset Assignment",
+  "finance.assets.disposal": "Asset Disposal",
+  
+  // Tax Center
+  "finance.taxes.sales": "Sales Tax Reporting",
+  "finance.taxes.income": "Income Tax Preparation",
+  "finance.taxes.estimated": "Estimated Tax Payments",
+  "finance.taxes.calendar": "Tax Calendar",
+  
+  // Reports & Analytics
+  "finance.reports.profitLoss": "Profit & Loss Statement",
+  "finance.reports.balanceSheet": "Balance Sheet",
+  "finance.reports.cashFlow": "Cash Flow Statement",
+  "finance.reports.expenses": "Expense Reports",
+  "finance.reports.revenue": "Revenue Reports",
+  "finance.reports.jobProfitability": "Job Profitability",
+  "finance.reports.custom": "Custom Report Builder",
+  
+  // Finance Settings
+  "finance.settings.accounts": "Chart of Accounts",
+  "finance.settings.fiscalYear": "Financial Year",
+  "finance.settings.currency": "Currency Settings",
+  "finance.settings.taxes": "Tax Settings",
+  "finance.settings.integrations": "Financial Integrations",
 };
