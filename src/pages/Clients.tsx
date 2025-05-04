@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +61,7 @@ import {
   Minus,
   Mail,
   MessageSquare,
-  FileExport,
+  FileText,
   UserX,
   UserCheck,
   Printer,
@@ -72,7 +71,7 @@ import {
   MoveVertical,
   CircleDot,
   Import,
-  FileText,
+  FileText as FileIcon,
   SearchCode,
 } from "lucide-react";
 import { Client, ClientType, mockClients } from "@/data/mockData";
@@ -693,7 +692,7 @@ const ClientList: React.FC<ClientListProps> = ({
                 )}
                 {isColumnVisible("nextService") && (
                   <TableCell className="py-3 hidden xl:table-cell text-sm">
-                    {client.nextJob || "None scheduled"}
+                    {client.lastService || "None scheduled"}
                   </TableCell>
                 )}
                 {isColumnVisible("balance") && (

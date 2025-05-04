@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +10,7 @@ import {
 import {
   Check,
   ChevronDown,
-  FileExport,
+  FileText,
   Mail,
   MessageSquare,
   Minus,
@@ -139,7 +138,7 @@ export const ClientBulkActions: React.FC<ClientBulkActionsProps> = ({
         className="gap-1"
         onClick={() => handleAction("Exported selected clients")}
       >
-        <FileExport className="h-3.5 w-3.5" />
+        <FileText className="h-3.5 w-3.5" />
         Export
       </Button>
 

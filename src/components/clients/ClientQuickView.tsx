@@ -101,7 +101,7 @@ export const ClientQuickView: React.FC<ClientQuickViewProps> = ({ client }) => {
             <span className="text-sm font-medium">Next Service</span>
           </div>
           <p className="mt-1 text-sm">
-            {client.nextJob || "None scheduled"}
+            {client.lastService || "None scheduled"}
           </p>
         </div>
       </div>
