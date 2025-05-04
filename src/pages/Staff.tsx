@@ -39,10 +39,14 @@ import StaffViewToggle from "@/components/staff/StaffViewToggle";
 import StaffCardView from "@/components/staff/StaffCardView";
 import StaffListView from "@/components/staff/StaffListView";
 
-// Add status field to mock staff
+// Add status field to mock staff with correct typing
 const mockStaffWithStatus = mockStaff.map((staff, index) => ({
   ...staff,
-  status: index % 10 === 0 ? "on-leave" : index % 15 === 0 ? "terminated" : "active"
+  status: index % 10 === 0 
+    ? "on-leave" as const 
+    : index % 15 === 0 
+    ? "terminated" as const 
+    : "active" as const
 }));
 
 const Staff = () => {
