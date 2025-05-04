@@ -62,30 +62,30 @@ const Header = ({
                 <DropdownMenuItem className="cursor-pointer">
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium leading-none">
-                      New job assigned: Smith Residence
+                      {t("notifications.newJob")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Today at 10:30 AM
+                      {t("notifications.today")}
                     </p>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium leading-none">
-                      Client feedback received: Johnson Office
+                      {t("notifications.clientFeedback")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Yesterday at 3:45 PM
+                      {t("notifications.yesterday")}
                     </p>
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="cursor-pointer">
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium leading-none">
-                      Low supply warning: Floor cleaner
+                      {t("notifications.lowSupply")}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Yesterday at 9:12 AM
+                      {t("notifications.yesterdayMorning")}
                     </p>
                   </div>
                 </DropdownMenuItem>

@@ -26,41 +26,43 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Settings = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const handleSave = () => {
     toast({
-      title: "Settings saved",
-      description: "Your settings have been saved successfully.",
+      title: t("settings.saved"),
+      description: t("settings.saved.description"),
     });
   };
 
   return (
     <div className="space-y-6 py-6 animate-fade-in">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("nav.settings")}</h1>
         <p className="text-muted-foreground">
-          Configure your CRM preferences and settings.
+          {t("settings.description")}
         </p>
       </div>
 
       <Tabs defaultValue="general">
         <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="company">Company Profile</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
+          <TabsTrigger value="general">{t("settings.tabs.general")}</TabsTrigger>
+          <TabsTrigger value="company">{t("settings.tabs.company")}</TabsTrigger>
+          <TabsTrigger value="users">{t("settings.tabs.users")}</TabsTrigger>
+          <TabsTrigger value="notifications">{t("settings.tabs.notifications")}</TabsTrigger>
+          <TabsTrigger value="integrations">{t("settings.tabs.integrations")}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="general" className="mt-6 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Account Settings</CardTitle>
+              <CardTitle>{t("settings.account.title")}</CardTitle>
               <CardDescription>
-                Manage your account preferences and personal information
+                {t("settings.account.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -69,13 +71,13 @@ const Settings = () => {
                   <AvatarFallback>AK</AvatarFallback>
                 </Avatar>
                 <div className="space-y-2">
-                  <h3 className="font-medium">Profile Picture</h3>
+                  <h3 className="font-medium">{t("settings.account.profilePicture")}</h3>
                   <div className="flex space-x-2">
                     <Button variant="outline" size="sm">
-                      Upload new image
+                      {t("settings.account.uploadImage")}
                     </Button>
                     <Button variant="ghost" size="sm">
-                      Remove
+                      {t("actions.delete")}
                     </Button>
                   </div>
                 </div>
@@ -83,57 +85,57 @@ const Settings = () => {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input id="fullName" placeholder="Your name" defaultValue="Admin User" />
+                  <Label htmlFor="fullName">{t("settings.account.fullName")}</Label>
+                  <Input id="fullName" placeholder={t("settings.account.fullNamePlaceholder")} defaultValue="Admin User" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" type="email" placeholder="Your email" defaultValue="admin@shinecrm.com" />
+                  <Label htmlFor="email">{t("settings.account.email")}</Label>
+                  <Input id="email" type="email" placeholder={t("settings.account.emailPlaceholder")} defaultValue="admin@shinecrm.com" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" placeholder="Your phone number" defaultValue="(555) 987-6543" />
+                  <Label htmlFor="phone">{t("settings.account.phone")}</Label>
+                  <Input id="phone" placeholder={t("settings.account.phonePlaceholder")} defaultValue="(555) 987-6543" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="role">{t("settings.account.role")}</Label>
                   <Select defaultValue="admin">
                     <SelectTrigger id="role">
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder={t("settings.account.selectRole")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">Administrator</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                      <SelectItem value="cleaner">Cleaner</SelectItem>
+                      <SelectItem value="admin">{t("settings.roles.admin")}</SelectItem>
+                      <SelectItem value="supervisor">{t("settings.roles.supervisor")}</SelectItem>
+                      <SelectItem value="cleaner">{t("settings.roles.cleaner")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("settings.account.password")}</Label>
                 <div className="flex items-end gap-4">
                   <Input type="password" id="password" value="********" readOnly className="flex-1" />
-                  <Button variant="outline">Change Password</Button>
+                  <Button variant="outline">{t("settings.account.changePassword")}</Button>
                 </div>
               </div>
               
-              <Button onClick={handleSave}>Save Changes</Button>
+              <Button onClick={handleSave}>{t("actions.save")}</Button>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader>
-              <CardTitle>App Settings</CardTitle>
+              <CardTitle>{t("settings.app.title")}</CardTitle>
               <CardDescription>
-                Configure application preferences and behavior
+                {t("settings.app.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Dark Mode</Label>
+                  <Label>{t("settings.app.darkMode")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Switch between light and dark themes
+                    {t("settings.app.darkModeDescription")}
                   </p>
                 </div>
                 <Switch />
@@ -141,9 +143,9 @@ const Settings = () => {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Automatic Check-In Reminders</Label>
+                  <Label>{t("settings.app.reminders")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Send notifications to staff before scheduled jobs
+                    {t("settings.app.remindersDescription")}
                   </p>
                 </div>
                 <Switch defaultChecked />
@@ -151,44 +153,45 @@ const Settings = () => {
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Language</Label>
+                  <Label>{t("app.language")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Set your preferred language for the application
+                    {t("settings.app.languageDescription")}
                   </p>
                 </div>
                 <Select defaultValue="english">
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select language" />
+                    <SelectValue placeholder={t("settings.app.selectLanguage")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="english">English</SelectItem>
                     <SelectItem value="spanish">Spanish</SelectItem>
                     <SelectItem value="french">French</SelectItem>
+                    <SelectItem value="swedish">Swedish</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Time Zone</Label>
+                  <Label>{t("settings.app.timezone")}</Label>
                   <p className="text-sm text-muted-foreground">
-                    Set the time zone for scheduling and reporting
+                    {t("settings.app.timezoneDescription")}
                   </p>
                 </div>
                 <Select defaultValue="pacific">
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select time zone" />
+                    <SelectValue placeholder={t("settings.app.selectTimezone")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pacific">Pacific Time (PT)</SelectItem>
-                    <SelectItem value="mountain">Mountain Time (MT)</SelectItem>
-                    <SelectItem value="central">Central Time (CT)</SelectItem>
-                    <SelectItem value="eastern">Eastern Time (ET)</SelectItem>
+                    <SelectItem value="pacific">{t("settings.app.timezones.pacific")}</SelectItem>
+                    <SelectItem value="mountain">{t("settings.app.timezones.mountain")}</SelectItem>
+                    <SelectItem value="central">{t("settings.app.timezones.central")}</SelectItem>
+                    <SelectItem value="eastern">{t("settings.app.timezones.eastern")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
-              <Button onClick={handleSave}>Save Settings</Button>
+              <Button onClick={handleSave}>{t("actions.save")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -196,9 +199,9 @@ const Settings = () => {
         <TabsContent value="company" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Company Profile</CardTitle>
+              <CardTitle>{t("settings.company.title")}</CardTitle>
               <CardDescription>
-                Manage your business details and information
+                {t("settings.company.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -207,60 +210,60 @@ const Settings = () => {
                   <span className="text-xl font-bold text-white">SC</span>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-medium">Company Logo</h3>
+                  <h3 className="font-medium">{t("settings.company.logo")}</h3>
                   <div className="flex space-x-2">
                     <Button variant="outline" size="sm">
-                      Upload new logo
+                      {t("settings.company.uploadLogo")}
                     </Button>
                     <Button variant="ghost" size="sm">
-                      Remove
+                      {t("actions.delete")}
                     </Button>
                   </div>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="companyName">Company Name</Label>
-                <Input id="companyName" placeholder="Your company name" defaultValue="Shine Clean" />
+                <Label htmlFor="companyName">{t("settings.company.name")}</Label>
+                <Input id="companyName" placeholder={t("settings.company.namePlaceholder")} defaultValue="Shine Clean" />
               </div>
               
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="businessPhone">Business Phone</Label>
-                  <Input id="businessPhone" placeholder="Business phone" defaultValue="(555) 123-4567" />
+                  <Label htmlFor="businessPhone">{t("settings.company.phone")}</Label>
+                  <Input id="businessPhone" placeholder={t("settings.company.phonePlaceholder")} defaultValue="(555) 123-4567" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="businessEmail">Business Email</Label>
-                  <Input id="businessEmail" type="email" placeholder="Business email" defaultValue="contact@shinecrm.com" />
+                  <Label htmlFor="businessEmail">{t("settings.company.email")}</Label>
+                  <Input id="businessEmail" type="email" placeholder={t("settings.company.emailPlaceholder")} defaultValue="contact@shinecrm.com" />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input id="address" placeholder="Street address" defaultValue="123 Cleaning Ave." />
+                <Label htmlFor="address">{t("settings.company.address")}</Label>
+                <Input id="address" placeholder={t("settings.company.addressPlaceholder")} defaultValue="123 Cleaning Ave." />
               </div>
               
               <div className="grid gap-4 md:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input id="city" placeholder="City" defaultValue="Cleanville" />
+                  <Label htmlFor="city">{t("settings.company.city")}</Label>
+                  <Input id="city" placeholder={t("settings.company.cityPlaceholder")} defaultValue="Cleanville" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Input id="state" placeholder="State" defaultValue="CA" />
+                  <Label htmlFor="state">{t("settings.company.state")}</Label>
+                  <Input id="state" placeholder={t("settings.company.statePlaceholder")} defaultValue="CA" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">Zip Code</Label>
-                  <Input id="zipCode" placeholder="Zip code" defaultValue="90210" />
+                  <Label htmlFor="zipCode">{t("settings.company.zipCode")}</Label>
+                  <Input id="zipCode" placeholder={t("settings.company.zipCodePlaceholder")} defaultValue="90210" />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
+                <Label htmlFor="website">{t("settings.company.website")}</Label>
                 <Input id="website" placeholder="https://" defaultValue="https://shinecrm.com" />
               </div>
               
-              <Button onClick={handleSave}>Save Company Profile</Button>
+              <Button onClick={handleSave}>{t("actions.save")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -387,7 +390,7 @@ const Settings = () => {
                 </div>
               </div>
               
-              <Button onClick={handleSave}>Save Notification Settings</Button>
+              <Button onClick={handleSave}>{t("actions.save")}</Button>
             </CardContent>
           </Card>
         </TabsContent>
