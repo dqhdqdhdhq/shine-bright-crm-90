@@ -16,7 +16,9 @@ import NotFound from './NotFound';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { useForm } from 'react-hook-form';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Textarea } from '@/components/ui/textarea';
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +28,17 @@ const ClientDetail = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showCommunicationDialog, setShowCommunicationDialog] = useState(false);
   const [communicationType, setCommunicationType] = useState('');
+
+  // Setup form for communication dialog
+  const communicationForm = useForm({
+    defaultValues: {
+      subject: '',
+      message: '',
+      callNotes: '',
+      duration: '',
+      noteType: ''
+    }
+  });
   
   if (!client) {
     return <NotFound />;
@@ -67,6 +80,12 @@ const ClientDetail = () => {
       const staff = getStaffById(id);
       return staff ? staff.name : 'Unknown';
     }).join(', ');
+  };
+
+  const handleSaveCommunication = (data) => {
+    console.log('Communication data:', data);
+    setShowCommunicationDialog(false);
+    communicationForm.reset();
   };
 
   return (
@@ -627,63 +646,100 @@ const ClientDetail = () => {
               Enter the details below to record this communication.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            {communicationType === 'email' && (
-              <>
-                <FormItem>
-                  <FormLabel>Subject</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Email subject" />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Email content" className="h-24" />
-                  </FormControl>
-                </FormItem>
-              </>
-            )}
-            {communicationType === 'call' && (
-              <>
-                <FormItem>
-                  <FormLabel>Call Notes</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Notes from the call" className="h-24" />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Call Duration</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Duration in minutes" type="number" />
-                  </FormControl>
-                </FormItem>
-              </>
-            )}
-            {communicationType === 'note' && (
-              <>
-                <FormItem>
-                  <FormLabel>Note</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Add your note here" className="h-24" />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Note Type</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Type of note" />
-                  </FormControl>
-                </FormItem>
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCommunicationDialog(false)}>Cancel</Button>
-            <Button onClick={() => {
-              // Here you would save the communication
-              setShowCommunicationDialog(false);
-            }}>Save</Button>
-          </DialogFooter>
+          
+          <Form {...communicationForm}>
+            <form onSubmit={communicationForm.handleSubmit(handleSaveCommunication)} className="space-y-4 py-4">
+              {communicationType === 'email' && (
+                <>
+                  <FormField
+                    control={communicationForm.control}
+                    name="subject"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Subject</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Email subject" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={communicationForm.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Email content" className="min-h-[100px]" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+              {communicationType === 'call' && (
+                <>
+                  <FormField
+                    control={communicationForm.control}
+                    name="callNotes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Call Notes</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Notes from the call" className="min-h-[100px]" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={communicationForm.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Call Duration</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Duration in minutes" type="number" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+              {communicationType === 'note' && (
+                <>
+                  <FormField
+                    control={communicationForm.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Note</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Add your note here" className="min-h-[100px]" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={communicationForm.control}
+                    name="noteType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Note Type</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Type of note" {...field} />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+              
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={() => setShowCommunicationDialog(false)}>Cancel</Button>
+                <Button type="submit">Save</Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
