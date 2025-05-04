@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardCalendarProps {
   jobs: Job[];
@@ -22,6 +22,7 @@ interface DashboardCalendarProps {
 const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
   const [date, setDate] = useState<Date>(new Date());
   const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // Create a map of jobs by date for easy lookup
   const jobsByDate = jobs.reduce((acc, job) => {
@@ -104,7 +105,7 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
   };
 
   const handleAction = (action: string, jobId: string) => {
-    toast.success(`Action triggered: ${action} for job #${jobId}`);
+    navigate(`/jobs`);
   };
   
   return (
@@ -142,7 +143,7 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
         ) : (
           <div className="space-y-2">
             {selectedDateJobs.map((job) => (
-              <Card key={job.id} className="p-3 hover:bg-accent/50 cursor-pointer transition-colors">
+              <Card key={job.id} className="p-3 hover:bg-accent/50 cursor-pointer transition-colors" onClick={() => navigate(`/jobs`)}>
                 <div className="flex justify-between">
                   <span className="font-medium">{job.clientName}</span>
                   <Badge variant="outline" className="text-xs h-5">
@@ -161,7 +162,10 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-7 text-xs"
-                    onClick={() => handleAction("View", job.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAction("View", job.id);
+                    }}
                   >
                     View
                   </Button>
@@ -169,7 +173,10 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
                     variant="ghost" 
                     size="sm" 
                     className="h-7 text-xs"
-                    onClick={() => handleAction("Assign", job.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAction("Assign", job.id);
+                    }}
                   >
                     Assign
                   </Button>

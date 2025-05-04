@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,11 +38,13 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer
 } from "recharts";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const todaysJobs = getTodaysJobs();
   const [searchQuery, setSearchQuery] = useState("");
   const [activityFilter, setActivityFilter] = useState("all");
+  const navigate = useNavigate();
   
   const mockRevenueData = [
     { name: "Jan", value: 4000 },
@@ -61,27 +62,61 @@ const Dashboard = () => {
   ];
   
   const handleQuickAction = (action: string) => {
-    toast.success(`Action triggered: ${action}`);
+    switch(action) {
+      case "View All Jobs":
+        navigate("/jobs");
+        break;
+      case "View All Activity":
+        navigate("/jobs");
+        break;
+      case "View All Alerts":
+        navigate("/jobs");
+        break;
+      case "Schedule Job":
+        navigate("/schedule");
+        break;
+      case "Add Client":
+        navigate("/clients");
+        break;
+      case "Staff Availability":
+        navigate("/staff");
+        break;
+      case "Generate Invoice":
+        navigate("/clients");
+        break;
+      default:
+        if (action.startsWith("Mark Complete")) {
+          const jobId = action.split(": ")[1];
+          navigate(`/jobs`);
+        } else if (action.startsWith("View Job Details")) {
+          const jobId = action.split(": ")[1];
+          navigate(`/jobs`);
+        } else if (action.startsWith("Go to")) {
+          const destination = action.includes("job") ? "/jobs" : 
+                             action.includes("client") ? "/clients" : "/schedule";
+          navigate(destination);
+        }
+    }
   };
   
   const handleMarkAsRead = (id: string) => {
-    toast.success(`Marked notification ${id} as read`);
+    navigate("/jobs");
   };
 
   const handleAddJob = () => {
-    toast.success("Starting new job creation process");
+    navigate("/schedule");
   };
   
   const handleAddClient = () => {
-    toast.success("Starting new client creation process");
+    navigate("/clients");
   };
 
   const handleStaffAction = (staffName: string, action: string) => {
-    toast.success(`${action} for ${staffName}`);
+    navigate("/staff");
   };
 
   const handleResolveAlert = (alertId: number, alertTitle: string) => {
-    toast.success(`Resolved alert: ${alertTitle}`);
+    navigate("/jobs");
   };
   
   return (
@@ -410,7 +445,7 @@ const Dashboard = () => {
               }}
               className="aspect-[4/3]"
             >
-              <ResponsiveContainer>
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={mockRevenueData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
