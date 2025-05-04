@@ -23,8 +23,11 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
   }, {} as Record<string, Job[]>);
 
   // Function to render calendar day content with job indicators
-  const renderDayContent = (day: Date) => {
+  const renderDayContent = (props: any) => {
     try {
+      // Get the day from props directly
+      const day = props.date;
+      
       // Make sure day is a valid Date object
       if (!(day instanceof Date) || isNaN(day.getTime())) {
         return null;
@@ -59,12 +62,9 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
         mode="single"
         selected={date}
         onSelect={setDate as any}
-        className="rounded-md border pointer-events-auto"
+        className="rounded-md border pointer-events-auto shadow-sm"
         components={{
-          DayContent: (props) => {
-            const { day } = props as { day: Date };
-            return renderDayContent(day);
-          }
+          DayContent: renderDayContent
         }}
         initialFocus
       />
@@ -79,7 +79,7 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
         ) : (
           <div className="space-y-2">
             {selectedDateJobs.map((job) => (
-              <div key={job.id} className="text-sm p-2 border rounded-md">
+              <div key={job.id} className="text-sm p-2 border rounded-md shadow-sm">
                 <div className="flex justify-between">
                   <span className="font-medium">{job.clientName}</span>
                   <Badge variant="outline" className="text-xs h-5">
