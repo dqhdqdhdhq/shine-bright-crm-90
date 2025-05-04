@@ -1,47 +1,66 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Home, Users, Clipboard, CalendarDays, Briefcase, Settings, X } from "lucide-react";
+import { Home, Users, Clipboard, CalendarDays, Briefcase, Settings, X, DollarSign } from "lucide-react";
+
 type SidebarProps = {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
 };
-const navItems = [{
-  name: "Dashboard",
-  path: "/",
-  icon: Home
-}, {
-  name: "Clients",
-  path: "/clients",
-  icon: Users
-}, {
-  name: "Services",
-  path: "/services",
-  icon: Clipboard
-}, {
-  name: "Staff",
-  path: "/staff",
-  icon: Users
-}, {
-  name: "Schedule",
-  path: "/schedule",
-  icon: CalendarDays
-}, {
-  name: "Jobs",
-  path: "/jobs",
-  icon: Briefcase
-}, {
-  name: "Settings",
-  path: "/settings",
-  icon: Settings
-}];
+
+const navItems = [
+  {
+    name: "Dashboard",
+    path: "/",
+    icon: Home
+  },
+  {
+    name: "Clients",
+    path: "/clients",
+    icon: Users
+  },
+  {
+    name: "Services",
+    path: "/services",
+    icon: Clipboard
+  },
+  {
+    name: "Staff",
+    path: "/staff",
+    icon: Users
+  },
+  {
+    name: "Schedule",
+    path: "/schedule",
+    icon: CalendarDays
+  },
+  {
+    name: "Jobs",
+    path: "/jobs",
+    icon: Briefcase
+  },
+  {
+    name: "Finance",
+    path: "/finance",
+    icon: DollarSign
+  },
+  {
+    name: "Settings",
+    path: "/settings",
+    icon: Settings
+  }
+];
+
 const Sidebar = ({
   isOpen,
   setIsOpen
 }: SidebarProps) => {
   const location = useLocation();
-  return <div className={cn("fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-card shadow-lg transition-transform duration-200 ease-in-out md:relative", isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-16")}>
+  
+  return (
+    <div className={cn("fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-card shadow-lg transition-transform duration-200 ease-in-out md:relative", isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0 md:w-16")}>
       <div className="flex items-center justify-between h-16 px-4 border-b">
         <div className="flex items-center space-x-2">
           {isOpen ? <div className="flex items-center">
@@ -62,6 +81,8 @@ const Sidebar = ({
             {isOpen && <span className="ml-3">{item.name}</span>}
           </Link>)}
       </nav>
-    </div>;
+    </div>
+  );
 };
+
 export default Sidebar;
