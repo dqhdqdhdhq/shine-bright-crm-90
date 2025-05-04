@@ -15,20 +15,20 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   ChevronLeft,
   ChevronRight,
-  List,
   MapPin,
-  Plus,
   User,
 } from "lucide-react";
 import { Job, mockJobs, mockStaff, getStaffById } from "@/data/mockData";
 import { format, addDays, startOfWeek, parse, isToday } from "date-fns";
 import { getInitials } from "@/lib/utils";
 import ViewModeSwitch, { ViewMode } from "@/components/jobs/ViewModeSwitch";
+import { ScheduleJobDialog } from "@/components/schedule/ScheduleJobDialog";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [view, setView] = useState<"day" | "week" | "month">("day");
   const [viewMode, setViewMode] = useState<ViewMode>("calendar");
+  const [selectedStaff, setSelectedStaff] = useState<string[]>([]);
   
   // Week view helpers
   const startOfCurrentWeek = startOfWeek(date);
@@ -37,6 +37,11 @@ const Schedule = () => {
   // Filter jobs based on the current view
   const filteredJobs = mockJobs.filter((job) => {
     const jobDate = parse(job.date, "yyyy-MM-dd", new Date());
+    
+    // First filter by staff if selected
+    if (selectedStaff.length > 0 && !job.assignedStaffIds.some(id => selectedStaff.includes(id))) {
+      return false;
+    }
     
     if (view === "day") {
       return format(date, "yyyy-MM-dd") === job.date;
@@ -81,6 +86,15 @@ const Schedule = () => {
   
   const navigateToday = () => {
     setDate(new Date());
+  };
+
+  // Toggle staff selection
+  const toggleStaffSelection = (staffId: string) => {
+    setSelectedStaff(prev => 
+      prev.includes(staffId) 
+        ? prev.filter(id => id !== staffId)
+        : [...prev, staffId]
+    );
   };
 
   // Render content based on view mode
@@ -171,57 +185,87 @@ const Schedule = () => {
             Manage job appointments and staff schedules.
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Schedule New Job</span>
-        </Button>
+        <ScheduleJobDialog />
       </div>
 
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="icon" onClick={navigatePrevious}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                <h2 className="text-lg font-semibold">
-                  {view === "day" ? formattedDate : view === "week" ? formattedWeek : formattedMonth}
-                </h2>
-                {!isToday(date) && (
-                  <Button variant="link" className="p-0 h-auto" onClick={navigateToday}>
-                    Today
-                  </Button>
+      <div className="flex flex-col md:flex-row gap-4">
+        {/* Staff selector sidebar */}
+        <Card className="md:w-64 shrink-0">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Staff</CardTitle>
+            <CardDescription>Filter by staff member</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {mockStaff.map((staff) => (
+                <div 
+                  key={staff.id} 
+                  className="flex items-center space-x-2 p-2 rounded-md cursor-pointer hover:bg-muted transition-colors"
+                  onClick={() => toggleStaffSelection(staff.id)}
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {getInitials(staff.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className={selectedStaff.includes(staff.id) ? "font-medium" : ""}>
+                    {staff.name}
+                  </span>
+                  {selectedStaff.includes(staff.id) && (
+                    <Badge variant="outline" className="ml-auto">Selected</Badge>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="flex-1">
+          <CardHeader className="pb-4">
+            <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="icon" onClick={navigatePrevious}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                  <h2 className="text-lg font-semibold">
+                    {view === "day" ? formattedDate : view === "week" ? formattedWeek : formattedMonth}
+                  </h2>
+                  {!isToday(date) && (
+                    <Button variant="link" className="p-0 h-auto" onClick={navigateToday}>
+                      Today
+                    </Button>
+                  )}
+                </div>
+                <Button variant="outline" size="icon" onClick={navigateNext}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+                <ViewModeSwitch 
+                  activeView={viewMode} 
+                  onViewChange={setViewMode} 
+                  className="mb-2 sm:mb-0" 
+                />
+                
+                {viewMode === "calendar" && (
+                  <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month")}>
+                    <TabsList>
+                      <TabsTrigger value="day">Day</TabsTrigger>
+                      <TabsTrigger value="week">Week</TabsTrigger>
+                      <TabsTrigger value="month">Month</TabsTrigger>
+                    </TabsList>
+                  </Tabs>
                 )}
               </div>
-              <Button variant="outline" size="icon" onClick={navigateNext}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
-
-            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
-              <ViewModeSwitch 
-                activeView={viewMode} 
-                onViewChange={setViewMode} 
-                className="mb-2 sm:mb-0" 
-              />
-              
-              {viewMode === "calendar" && (
-                <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month")}>
-                  <TabsList>
-                    <TabsTrigger value="day">Day</TabsTrigger>
-                    <TabsTrigger value="week">Week</TabsTrigger>
-                    <TabsTrigger value="month">Month</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {renderViewModeContent()}
-        </CardContent>
-      </Card>
+          </CardHeader>
+          <CardContent>
+            {renderViewModeContent()}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
