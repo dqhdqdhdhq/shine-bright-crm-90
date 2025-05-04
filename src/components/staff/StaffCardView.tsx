@@ -2,7 +2,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Mail, Phone } from "lucide-react";
 import { StaffMember } from "@/data/mockData";
 import { formatPhoneNumber, getInitials } from "@/lib/utils";
@@ -27,9 +27,13 @@ const StaffCardView: React.FC<StaffCardViewProps> = ({
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center">
               <Avatar className="h-20 w-20">
-                <AvatarFallback className="text-lg">
-                  {getInitials(staff.name)}
-                </AvatarFallback>
+                {staff.avatar ? (
+                  <AvatarImage src={`https://images.unsplash.com/` + staff.avatar} />
+                ) : (
+                  <AvatarFallback className="text-lg">
+                    {getInitials(staff.name)}
+                  </AvatarFallback>
+                )}
               </Avatar>
               <h3 className="mt-4 font-medium text-lg">{staff.name}</h3>
               <Badge
@@ -48,6 +52,24 @@ const StaffCardView: React.FC<StaffCardViewProps> = ({
                   ? "Supervisor"
                   : "Cleaner"}
               </Badge>
+              {staff.status && (
+                <Badge
+                  className="mt-1"
+                  variant={
+                    staff.status === "active"
+                      ? "outline"
+                      : staff.status === "on-leave"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                >
+                  {staff.status === "active"
+                    ? "Active"
+                    : staff.status === "on-leave"
+                    ? "On Leave"
+                    : "Terminated"}
+                </Badge>
+              )}
               <div className="mt-4 space-y-2 w-full">
                 <div className="flex items-center justify-center text-sm">
                   <Mail className="h-4 w-4 mr-2 text-muted-foreground" />

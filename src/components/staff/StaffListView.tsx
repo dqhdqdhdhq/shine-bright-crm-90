@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Calendar, Mail, Phone } from "lucide-react";
 import { StaffMember } from "@/data/mockData";
@@ -31,6 +31,7 @@ const StaffListView: React.FC<StaffListViewProps> = ({
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Role</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Skills</TableHead>
             <TableHead>Hire Date</TableHead>
@@ -47,9 +48,13 @@ const StaffListView: React.FC<StaffListViewProps> = ({
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback className="text-xs">
-                      {getInitials(staff.name)}
-                    </AvatarFallback>
+                    {staff.avatar ? (
+                      <AvatarImage src={`https://images.unsplash.com/` + staff.avatar} />
+                    ) : (
+                      <AvatarFallback className="text-xs">
+                        {getInitials(staff.name)}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <span className="font-medium">{staff.name}</span>
                 </div>
@@ -69,6 +74,23 @@ const StaffListView: React.FC<StaffListViewProps> = ({
                     : staff.role === "supervisor"
                     ? "Supervisor"
                     : "Cleaner"}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant={
+                    staff.status === "active"
+                      ? "outline"
+                      : staff.status === "on-leave"
+                      ? "secondary"
+                      : "destructive"
+                  }
+                >
+                  {staff.status === "active"
+                    ? "Active"
+                    : staff.status === "on-leave"
+                    ? "On Leave"
+                    : "Terminated"}
                 </Badge>
               </TableCell>
               <TableCell>

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +23,14 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Calendar,
   Edit,
@@ -30,7 +38,6 @@ import {
   Phone,
   Plus,
   Search,
-  User,
 } from "lucide-react";
 import { StaffMember, mockStaff, getJobsByStaffId } from "@/data/mockData";
 import { formatPhoneNumber, getInitials } from "@/lib/utils";
@@ -38,6 +45,8 @@ import StaffFilters, { StaffFilters as StaffFiltersType } from "@/components/sta
 import StaffViewToggle from "@/components/staff/StaffViewToggle";
 import StaffCardView from "@/components/staff/StaffCardView";
 import StaffListView from "@/components/staff/StaffListView";
+import StaffForm from "@/components/staff/StaffForm";
+import { toast } from "sonner";
 
 // Add status field to mock staff with correct typing
 const mockStaffWithStatus = mockStaff.map((staff, index) => ({
@@ -46,13 +55,20 @@ const mockStaffWithStatus = mockStaff.map((staff, index) => ({
     ? "on-leave" as const 
     : index % 15 === 0 
     ? "terminated" as const 
-    : "active" as const
+    : "active" as const,
+  emergencyContact: index % 3 === 0 ? { name: "Emergency Contact", phone: "555-123-4567" } : undefined,
+  address: index % 5 === 0 ? "123 Main St, Anytown, USA" : undefined,
+  payRate: index % 4 === 0 ? "25.00" : undefined,
+  notes: index % 7 === 0 ? "Excellent worker, great with customers." : undefined,
 }));
 
 const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
+  const [isAddingStaff, setIsAddingStaff] = useState(false);
   const [view, setView] = useState<"card" | "list">("card");
+  const [staffData, setStaffData] = useState(mockStaffWithStatus);
   const [filters, setFilters] = useState<StaffFiltersType>({
     roles: [],
     skills: [],
@@ -61,7 +77,7 @@ const Staff = () => {
   });
 
   // Apply both search and filters to the staff list
-  const filteredStaff = mockStaffWithStatus.filter(
+  const filteredStaff = staffData.filter(
     (staff) => {
       // Search filter logic
       const matchesSearch = 
@@ -93,8 +109,43 @@ const Staff = () => {
     setSelectedStaff(staff);
   };
 
+  const handleEditStaff = (staff: StaffMember) => {
+    setSelectedStaff(null);
+    setEditingStaff(staff);
+  };
+
+  const handleAddStaff = () => {
+    setIsAddingStaff(true);
+  };
+
+  const handleStaffFormSubmit = (data: any) => {
+    if (editingStaff) {
+      // Update existing staff
+      const updatedStaffData = staffData.map(staff => 
+        staff.id === editingStaff.id ? { ...staff, ...data, id: staff.id } : staff
+      );
+      setStaffData(updatedStaffData);
+      setEditingStaff(null);
+      toast("Staff updated successfully!");
+    } else {
+      // Add new staff
+      const newStaff: StaffMember = {
+        ...data,
+        id: `staff-${Date.now()}`,
+      };
+      setStaffData([newStaff, ...staffData]);
+      setIsAddingStaff(false);
+      toast("New staff member added!");
+    }
+  };
+  
   const closeDialog = () => {
     setSelectedStaff(null);
+  };
+
+  const closeSheets = () => {
+    setEditingStaff(null);
+    setIsAddingStaff(false);
   };
 
   const resetFilters = () => {
@@ -115,7 +166,7 @@ const Staff = () => {
             Manage your cleaning staff members and teams.
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={handleAddStaff}>
           <Plus className="h-4 w-4" />
           <span>Add Staff Member</span>
         </Button>
@@ -176,7 +227,41 @@ const Staff = () => {
         staff={selectedStaff}
         open={!!selectedStaff}
         onClose={closeDialog}
+        onEdit={handleEditStaff}
       />
+
+      <Sheet open={!!editingStaff} onOpenChange={closeSheets}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit Staff Member</SheetTitle>
+            <SheetDescription>Update staff information</SheetDescription>
+          </SheetHeader>
+          {editingStaff && (
+            <div className="py-4">
+              <StaffForm 
+                staff={editingStaff} 
+                onSubmit={handleStaffFormSubmit} 
+                onCancel={closeSheets} 
+              />
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={isAddingStaff} onOpenChange={closeSheets}>
+        <SheetContent className="sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Add New Staff Member</SheetTitle>
+            <SheetDescription>Enter details for the new staff member</SheetDescription>
+          </SheetHeader>
+          <div className="py-4">
+            <StaffForm 
+              onSubmit={handleStaffFormSubmit} 
+              onCancel={closeSheets} 
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
@@ -185,12 +270,14 @@ interface StaffDetailsDialogProps {
   staff: StaffMember | null;
   open: boolean;
   onClose: () => void;
+  onEdit: (staff: StaffMember) => void;
 }
 
 const StaffDetailsDialog: React.FC<StaffDetailsDialogProps> = ({
   staff,
   open,
   onClose,
+  onEdit,
 }) => {
   if (!staff) return null;
   
@@ -207,9 +294,13 @@ const StaffDetailsDialog: React.FC<StaffDetailsDialogProps> = ({
         <div className="flex flex-col sm:flex-row items-start gap-6">
           <div className="flex flex-col items-center">
             <Avatar className="h-32 w-32">
-              <AvatarFallback className="text-3xl">
-                {getInitials(staff.name)}
-              </AvatarFallback>
+              {staff.avatar ? (
+                <AvatarImage src={`https://images.unsplash.com/` + staff.avatar} />
+              ) : (
+                <AvatarFallback className="text-3xl">
+                  {getInitials(staff.name)}
+                </AvatarFallback>
+              )}
             </Avatar>
             <h2 className="mt-4 font-semibold text-xl">{staff.name}</h2>
             <Badge
@@ -227,6 +318,22 @@ const StaffDetailsDialog: React.FC<StaffDetailsDialogProps> = ({
                 : staff.role === "supervisor"
                 ? "Supervisor"
                 : "Cleaner"}
+            </Badge>
+            <Badge
+              className="mt-1"
+              variant={
+                staff.status === "active"
+                  ? "outline"
+                  : staff.status === "on-leave"
+                  ? "secondary"
+                  : "destructive"
+              }
+            >
+              {staff.status === "active"
+                ? "Active"
+                : staff.status === "on-leave"
+                ? "On Leave"
+                : "Terminated"}
             </Badge>
           </div>
 
@@ -270,6 +377,25 @@ const StaffDetailsDialog: React.FC<StaffDetailsDialogProps> = ({
                     </div>
                   </div>
                   
+                  {staff.address && (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Address</p>
+                      <div className="flex items-center">
+                        <span>{staff.address}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {staff.emergencyContact && (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Emergency Contact</p>
+                      <div>
+                        <p>{staff.emergencyContact.name}</p>
+                        <p>{staff.emergencyContact.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Skills & Certifications</p>
                     <div className="flex flex-wrap gap-2">
@@ -280,6 +406,15 @@ const StaffDetailsDialog: React.FC<StaffDetailsDialogProps> = ({
                       ))}
                     </div>
                   </div>
+
+                  {staff.notes && (
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Notes</p>
+                      <div className="bg-muted/50 p-3 rounded-md">
+                        {staff.notes}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               
@@ -367,7 +502,7 @@ const StaffDetailsDialog: React.FC<StaffDetailsDialogProps> = ({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => staff && onEdit(staff)}>
             <Edit className="h-4 w-4" />
             Edit Staff
           </Button>
