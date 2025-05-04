@@ -1,5 +1,6 @@
 // Client Types
 export type ClientType = 'residential' | 'commercial';
+export type StaffRole = 'admin' | 'supervisor' | 'cleaner';
 
 export interface Address {
   street: string;
@@ -55,7 +56,7 @@ export interface StaffMember {
   name: string;
   email: string;
   phone: string;
-  role: 'admin' | 'supervisor' | 'cleaner';
+  role: StaffRole;
   skills: string[];
   availability: {
     monday: { start?: string; end?: string };
@@ -68,6 +69,7 @@ export interface StaffMember {
   };
   hireDate: string;
   avatar?: string;
+  status?: 'active' | 'on-leave' | 'terminated';
 }
 
 // Job/Schedule Types
