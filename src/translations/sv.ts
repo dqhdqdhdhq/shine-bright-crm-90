@@ -1,3 +1,4 @@
+
 export const sv = {
   // Common
   "app.title": "Städhantering",
@@ -194,6 +195,72 @@ export const sv = {
   "finance.settings.currency": "Valutainställningar",
   "finance.settings.taxes": "Skatteinställningar",
   "finance.settings.integrations": "Finansiella Integrationer",
+
+  // Settings tabs
+  "settings.tabs.general": "Allmänt",
+  "settings.tabs.company": "Företagsprofil",
+  "settings.tabs.users": "Användarhantering",
+  "settings.tabs.notifications": "Notifikationer",
+  "settings.tabs.integrations": "Integrationer",
+  
+  // Account settings
+  "settings.account.title": "Kontoinställningar",
+  "settings.account.description": "Hantera dina kontoinställningar och personlig information",
+  "settings.account.profilePicture": "Profilbild",
+  "settings.account.uploadImage": "Ladda upp ny bild",
+  "settings.account.fullName": "Fullständigt namn",
+  "settings.account.fullNamePlaceholder": "Ditt namn",
+  "settings.account.email": "E-postadress",
+  "settings.account.emailPlaceholder": "Din e-post",
+  "settings.account.phone": "Telefonnummer",
+  "settings.account.phonePlaceholder": "Ditt telefonnummer",
+  "settings.account.role": "Roll",
+  "settings.account.selectRole": "Välj roll",
+  "settings.account.password": "Lösenord",
+  "settings.account.changePassword": "Ändra lösenord",
+  
+  // Roles
+  "settings.roles.admin": "Administratör",
+  "settings.roles.supervisor": "Handledare",
+  "settings.roles.cleaner": "Städare",
+  
+  // App settings
+  "settings.app.title": "Appinställningar",
+  "settings.app.description": "Konfigurera applikationspreferenser och beteende",
+  "settings.app.darkMode": "Mörkt läge",
+  "settings.app.darkModeDescription": "Växla mellan ljust och mörkt tema",
+  "settings.app.reminders": "Automatiska incheckningspåminnelser",
+  "settings.app.remindersDescription": "Skicka notifikationer till personal före schemalagda jobb",
+  "settings.app.languageDescription": "Ställ in ditt föredragna språk för applikationen",
+  "settings.app.selectLanguage": "Välj språk",
+  "settings.app.timezone": "Tidszon",
+  "settings.app.timezoneDescription": "Ställ in tidszonen för schemaläggning och rapportering",
+  "settings.app.selectTimezone": "Välj tidszon",
+  "settings.app.timezones.pacific": "Pacific-tid (PT)",
+  "settings.app.timezones.mountain": "Mountain-tid (MT)",
+  "settings.app.timezones.central": "Central-tid (CT)",
+  "settings.app.timezones.eastern": "Eastern-tid (ET)",
+  
+  // Company settings
+  "settings.company.title": "Företagsprofil",
+  "settings.company.description": "Hantera dina företagsuppgifter och information",
+  "settings.company.logo": "Företagslogotyp",
+  "settings.company.uploadLogo": "Ladda upp ny logotyp",
+  "settings.company.name": "Företagsnamn",
+  "settings.company.namePlaceholder": "Ditt företagsnamn",
+  "settings.company.phone": "Företagstelefon",
+  "settings.company.phonePlaceholder": "Företagstelefon",
+  "settings.company.email": "Företagse-post",
+  "settings.company.emailPlaceholder": "Företagse-post",
+  "settings.company.address": "Adress",
+  "settings.company.addressPlaceholder": "Gatuadress",
+  "settings.company.city": "Stad",
+  "settings.company.cityPlaceholder": "Stad",
+  "settings.company.state": "Län",
+  "settings.company.statePlaceholder": "Län",
+  "settings.company.zipCode": "Postnummer",
+  "settings.company.zipCodePlaceholder": "Postnummer",
+  "settings.company.website": "Webbplats",
   
   // Profile
   "profile": "Profil",

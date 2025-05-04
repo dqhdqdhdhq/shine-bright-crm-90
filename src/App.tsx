@@ -15,6 +15,10 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/layout/Layout";
 import { LanguageProvider } from "./contexts/LanguageContext";
+import Invoicing from "./pages/finance/Invoicing";
+import Expenses from "./pages/finance/Expenses";
+import Payroll from "./pages/finance/Payroll";
+import FinanceDashboard from "./pages/finance/FinanceDashboard";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +39,10 @@ const App = () => (
               <Route path="schedule" element={<Schedule />} />
               <Route path="jobs" element={<Jobs />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="finance" element={<FinanceDashboard />} />
+              <Route path="finance/invoicing" element={<Invoicing />} />
+              <Route path="finance/expenses" element={<Expenses />} />
+              <Route path="finance/payroll" element={<Payroll />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Routes>
