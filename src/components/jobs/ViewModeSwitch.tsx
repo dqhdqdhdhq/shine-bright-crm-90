@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 export type ViewMode = "list" | "calendar" | "map";
 
-interface ViewModeSwitchProps {
+export interface ViewModeSwitchProps {
   activeView: ViewMode;
   onViewChange: (view: ViewMode) => void;
   className?: string;
