@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,10 +23,12 @@ import {
 import { Job, mockJobs, mockStaff, getStaffById } from "@/data/mockData";
 import { format, addDays, startOfWeek, parse, isToday } from "date-fns";
 import { getInitials } from "@/lib/utils";
+import ViewModeSwitch, { ViewMode } from "@/components/jobs/ViewModeSwitch";
 
 const Schedule = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [view, setView] = useState<"day" | "week" | "month">("day");
+  const [viewMode, setViewMode] = useState<ViewMode>("calendar");
   
   // Week view helpers
   const startOfCurrentWeek = startOfWeek(date);
@@ -80,56 +83,47 @@ const Schedule = () => {
     setDate(new Date());
   };
 
-  return (
-    <div className="space-y-6 py-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Schedule</h1>
-          <p className="text-muted-foreground">
-            Manage job appointments and staff schedules.
-          </p>
-        </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Schedule New Job</span>
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="icon" onClick={navigatePrevious}>
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                <h2 className="text-lg font-semibold">
-                  {view === "day" ? formattedDate : view === "week" ? formattedWeek : formattedMonth}
-                </h2>
-                {!isToday(date) && (
-                  <Button variant="link" className="p-0 h-auto" onClick={navigateToday}>
-                    Today
-                  </Button>
-                )}
-              </div>
-              <Button variant="outline" size="icon" onClick={navigateNext}>
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month")}>
-                <TabsList>
-                  <TabsTrigger value="day">Day</TabsTrigger>
-                  <TabsTrigger value="week">Week</TabsTrigger>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                </TabsList>
-              </Tabs>
+  // Render content based on view mode
+  const renderViewModeContent = () => {
+    switch (viewMode) {
+      case "list":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">List View</h3>
+            <div className="space-y-4">
+              {filteredJobs.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  No jobs scheduled for this time period.
+                </div>
+              ) : (
+                filteredJobs
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                  .map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))
+              )}
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          {view === "month" ? (
+        );
+      case "map":
+        return (
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Map View</h3>
+            <div className="border border-dashed border-muted-foreground rounded-md h-96 flex items-center justify-center">
+              <div className="text-center text-muted-foreground">
+                <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Map view is coming soon</p>
+                <p className="text-sm">
+                  This view will display job locations on an interactive map
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case "calendar":
+      default:
+        if (view === "month") {
+          return (
             <div className="space-y-4">
               <Calendar
                 mode="single"
@@ -159,11 +153,73 @@ const Schedule = () => {
                 )}
               </div>
             </div>
-          ) : view === "week" ? (
-            <WeekView weekDays={weekDays} jobs={filteredJobs} />
-          ) : (
-            <DayView date={date} jobs={filteredJobs} />
-          )}
+          );
+        } else if (view === "week") {
+          return <WeekView weekDays={weekDays} jobs={filteredJobs} />;
+        } else {
+          return <DayView date={date} jobs={filteredJobs} />;
+        }
+    }
+  };
+
+  return (
+    <div className="space-y-6 py-6 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Schedule</h1>
+          <p className="text-muted-foreground">
+            Manage job appointments and staff schedules.
+          </p>
+        </div>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          <span>Schedule New Job</span>
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col space-y-4 md:space-y-0 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="icon" onClick={navigatePrevious}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+                <h2 className="text-lg font-semibold">
+                  {view === "day" ? formattedDate : view === "week" ? formattedWeek : formattedMonth}
+                </h2>
+                {!isToday(date) && (
+                  <Button variant="link" className="p-0 h-auto" onClick={navigateToday}>
+                    Today
+                  </Button>
+                )}
+              </div>
+              <Button variant="outline" size="icon" onClick={navigateNext}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
+              <ViewModeSwitch 
+                activeView={viewMode} 
+                onViewChange={setViewMode} 
+                className="mb-2 sm:mb-0" 
+              />
+              
+              {viewMode === "calendar" && (
+                <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month")}>
+                  <TabsList>
+                    <TabsTrigger value="day">Day</TabsTrigger>
+                    <TabsTrigger value="week">Week</TabsTrigger>
+                    <TabsTrigger value="month">Month</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {renderViewModeContent()}
         </CardContent>
       </Card>
     </div>
