@@ -53,7 +53,7 @@ const FinanceNavigation: React.FC = () => {
       icon: <BarChart2 className="h-5 w-5" /> 
     },
     { 
-      name: t("settings.title"), 
+      name: t("nav.settings"), 
       path: "/finance/settings", 
       icon: <Settings className="h-5 w-5" /> 
     },
