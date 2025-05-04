@@ -1,10 +1,9 @@
-
 import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { MoveVertical } from "lucide-react";
-import { ClientColumn } from "@/pages/Clients";
+import { ClientColumn } from "@/components/clients/ClientUtils";
 
 interface ClientColumnSelectorProps {
   visibleColumns: ClientColumn[];

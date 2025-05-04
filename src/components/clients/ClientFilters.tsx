@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,7 @@ import {
   CircleDot,
 } from "lucide-react";
 import { format } from "date-fns";
-import { ClientStatus } from "@/pages/Clients";
+import { ClientStatus } from "@/components/clients/ClientUtils";
 
 interface ClientFiltersProps {
   filters: {
@@ -53,7 +52,7 @@ interface ClientFiltersProps {
 }
 
 // Mock data for dropdowns
-const mockTags = ["VIP", "Regular", "New Client", "Premium", "Monthly", "Weekly", "Bi-Weekly"];
+const mockTags = ["VIP", "Regular", "New Client", "Premium", "Monthly", "Bi-Weekly"];
 const mockZipCodes = ["12345", "23456", "34567", "45678", "56789"];
 const mockStaff = ["John Doe", "Jane Smith", "Robert Johnson", "Emily Davis"];
 const mockStatuses: ClientStatus[] = ["lead", "prospect", "active", "on-hold", "inactive", "lost"];
