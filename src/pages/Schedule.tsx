@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,17 +118,13 @@ const Schedule = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <TabsList>
-                <TabsTrigger value="day" onClick={() => setView("day")} data-selected={view === "day"}>
-                  Day
-                </TabsTrigger>
-                <TabsTrigger value="week" onClick={() => setView("week")} data-selected={view === "week"}>
-                  Week
-                </TabsTrigger>
-                <TabsTrigger value="month" onClick={() => setView("month")} data-selected={view === "month"}>
-                  Month
-                </TabsTrigger>
-              </TabsList>
+              <Tabs value={view} onValueChange={(v) => setView(v as "day" | "week" | "month")}>
+                <TabsList>
+                  <TabsTrigger value="day">Day</TabsTrigger>
+                  <TabsTrigger value="week">Week</TabsTrigger>
+                  <TabsTrigger value="month">Month</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </CardHeader>
