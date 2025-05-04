@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,16 +34,55 @@ import {
 } from "lucide-react";
 import { StaffMember, mockStaff, getJobsByStaffId } from "@/data/mockData";
 import { formatPhoneNumber, getInitials } from "@/lib/utils";
+import StaffFilters, { StaffFilters as StaffFiltersType } from "@/components/staff/StaffFilters";
+import StaffViewToggle from "@/components/staff/StaffViewToggle";
+import StaffCardView from "@/components/staff/StaffCardView";
+import StaffListView from "@/components/staff/StaffListView";
+
+// Add status field to mock staff
+const mockStaffWithStatus = mockStaff.map((staff, index) => ({
+  ...staff,
+  status: index % 10 === 0 ? "on-leave" : index % 15 === 0 ? "terminated" : "active"
+}));
 
 const Staff = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [view, setView] = useState<"card" | "list">("card");
+  const [filters, setFilters] = useState<StaffFiltersType>({
+    roles: [],
+    skills: [],
+    status: [],
+    search: "",
+  });
 
-  const filteredStaff = mockStaff.filter(
-    (staff) =>
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.phone.includes(searchTerm)
+  // Apply both search and filters to the staff list
+  const filteredStaff = mockStaffWithStatus.filter(
+    (staff) => {
+      // Search filter logic
+      const matchesSearch = 
+        searchTerm === "" ||
+        staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        staff.phone.includes(searchTerm);
+
+      // Role filter logic
+      const matchesRole = 
+        filters.roles.length === 0 || 
+        filters.roles.includes(staff.role);
+
+      // Skill filter logic
+      const matchesSkill = 
+        filters.skills.length === 0 || 
+        filters.skills.some(skill => staff.skills.includes(skill));
+
+      // Status filter logic
+      const matchesStatus = 
+        filters.status.length === 0 || 
+        filters.status.includes(staff.status);
+
+      return matchesSearch && matchesRole && matchesSkill && matchesStatus;
+    }
   );
 
   const handleStaffClick = (staff: StaffMember) => {
@@ -53,6 +91,15 @@ const Staff = () => {
 
   const closeDialog = () => {
     setSelectedStaff(null);
+  };
+
+  const resetFilters = () => {
+    setFilters({
+      roles: [],
+      skills: [],
+      status: [],
+      search: "",
+    });
   };
 
   return (
@@ -70,89 +117,56 @@ const Staff = () => {
         </Button>
       </div>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search staff members..."
-          className="pl-8 w-full"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search staff members..."
+            className="pl-8 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <div className="flex justify-end gap-2">
+          <StaffViewToggle view={view} setView={setView} />
+        </div>
+      </div>
+
+      <StaffFilters 
+        filters={filters} 
+        setFilters={setFilters} 
+        resetFilters={resetFilters} 
+      />
+
+      {view === "card" ? (
+        <StaffCardView 
+          staffMembers={filteredStaff} 
+          onStaffClick={handleStaffClick} 
         />
-      </div>
+      ) : (
+        <StaffListView 
+          staffMembers={filteredStaff} 
+          onStaffClick={handleStaffClick} 
+        />
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredStaff.map((staff) => (
-          <Card
-            key={staff.id}
-            className="cursor-pointer hover:shadow-md transition-all"
-            onClick={() => handleStaffClick(staff)}
-          >
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center text-center">
-                <Avatar className="h-20 w-20">
-                  <AvatarFallback className="text-lg">
-                    {getInitials(staff.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <h3 className="mt-4 font-medium text-lg">{staff.name}</h3>
-                <Badge
-                  className="mt-2"
-                  variant={
-                    staff.role === "admin"
-                      ? "default"
-                      : staff.role === "supervisor"
-                      ? "secondary"
-                      : "outline"
-                  }
-                >
-                  {staff.role === "admin"
-                    ? "Administrator"
-                    : staff.role === "supervisor"
-                    ? "Supervisor"
-                    : "Cleaner"}
-                </Badge>
-                <div className="mt-4 space-y-2 w-full">
-                  <div className="flex items-center justify-center text-sm">
-                    <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span className="truncate">{staff.email}</span>
-                  </div>
-                  <div className="flex items-center justify-center text-sm">
-                    <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                    <span>{formatPhoneNumber(staff.phone)}</span>
-                  </div>
-                </div>
-                <div className="mt-4 flex flex-wrap gap-1 justify-center">
-                  {staff.skills.slice(0, 2).map((skill, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                  {staff.skills.length > 2 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{staff.skills.length - 2} more
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {filteredStaff.length === 0 && (
-          <Card className="col-span-full p-12">
-            <div className="text-center">
-              <h3 className="font-medium text-lg mb-2">No Staff Found</h3>
-              <p className="text-muted-foreground mb-4">
-                No staff members match your search criteria.
-              </p>
-              <Button variant="outline" onClick={() => setSearchTerm("")}>
-                Clear Search
-              </Button>
-            </div>
-          </Card>
-        )}
-      </div>
+      {filteredStaff.length === 0 && (
+        <Card className="p-12">
+          <div className="text-center">
+            <h3 className="font-medium text-lg mb-2">No Staff Found</h3>
+            <p className="text-muted-foreground mb-4">
+              No staff members match your search criteria.
+            </p>
+            <Button variant="outline" onClick={() => {
+              setSearchTerm("");
+              resetFilters();
+            }}>
+              Clear Filters
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <StaffDetailsDialog
         staff={selectedStaff}
