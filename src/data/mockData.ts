@@ -32,6 +32,8 @@ export interface Client {
 }
 
 // Service Types
+export type ServiceCategory = 'standard cleaning' | 'deep cleaning' | 'add-ons' | 'commercial' | 'specialized';
+
 export interface Service {
   id: string;
   name: string;
@@ -43,6 +45,8 @@ export interface Service {
   requiredSupplies: string[];
   clientType: ClientType | 'both';
   color?: string;
+  category?: ServiceCategory;
+  isActive?: boolean;
 }
 
 // Staff Types
@@ -275,6 +279,8 @@ export const mockServices: Service[] = [
     ],
     clientType: 'residential',
     color: '#0ea5e9',
+    category: 'standard cleaning',
+    isActive: true,
   },
   {
     id: '2',
@@ -304,6 +310,8 @@ export const mockServices: Service[] = [
     ],
     clientType: 'residential',
     color: '#06b6d4',
+    category: 'deep cleaning',
+    isActive: true,
   },
   {
     id: '3',
@@ -334,6 +342,8 @@ export const mockServices: Service[] = [
     ],
     clientType: 'commercial',
     color: '#14b8a6',
+    category: 'commercial',
+    isActive: true,
   },
   {
     id: '4',
@@ -363,6 +373,8 @@ export const mockServices: Service[] = [
     ],
     clientType: 'residential',
     color: '#22c55e',
+    category: 'deep cleaning',
+    isActive: true,
   },
   {
     id: '5',
@@ -391,6 +403,59 @@ export const mockServices: Service[] = [
     ],
     clientType: 'commercial',
     color: '#f43f5e',
+    category: 'specialized',
+    isActive: true,
+  },
+  {
+    id: '6',
+    name: 'Window Cleaning',
+    description: 'Professional interior and exterior window cleaning for crystal clear results.',
+    defaultDuration: 120,
+    price: 85,
+    priceType: 'flat',
+    tasks: [
+      'Clean all interior windows',
+      'Clean all exterior windows (first and second floor)',
+      'Clean window tracks',
+      'Clean window sills',
+      'Polish glass surfaces',
+    ],
+    requiredSupplies: [
+      'Professional window cleaner',
+      'Microfiber cloths',
+      'Squeegee',
+      'Extension pole',
+      'Ladder',
+    ],
+    clientType: 'both',
+    color: '#3b82f6',
+    category: 'add-ons',
+    isActive: true,
+  },
+  {
+    id: '7',
+    name: 'Carpet Cleaning',
+    description: 'Deep carpet cleaning using hot water extraction method.',
+    defaultDuration: 180,
+    price: 0.35,
+    priceType: 'sqft',
+    tasks: [
+      'Pre-treat stains',
+      'Hot water extraction cleaning',
+      'Deodorize carpets',
+      'Speed dry with fans',
+    ],
+    requiredSupplies: [
+      'Carpet cleaning machine',
+      'Carpet shampoo',
+      'Stain pre-treatment',
+      'Deodorizer',
+      'Fans',
+    ],
+    clientType: 'both',
+    color: '#8b5cf6',
+    category: 'add-ons',
+    isActive: false,
   },
 ];
 
