@@ -42,15 +42,19 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
         <div className="flex items-center space-x-2">
           {isOpen ? (
             <>
-              <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                <span className="text-white font-bold">SC</span>
-              </div>
-              <h1 className="text-lg font-bold">Shine CRM</h1>
+              <img 
+                src="/lovable-uploads/3a24780e-ffd1-4e37-ae94-fc1b60b0a042.png" 
+                alt="Team Software Logo" 
+                className="w-8 h-8 object-contain" 
+              />
+              <h1 className="text-lg font-bold">Team Software</h1>
             </>
           ) : (
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-white font-bold">SC</span>
-            </div>
+            <img 
+              src="/lovable-uploads/3a24780e-ffd1-4e37-ae94-fc1b60b0a042.png" 
+              alt="Team Software Logo" 
+              className="w-8 h-8 object-contain" 
+            />
           )}
         </div>
         <Button
