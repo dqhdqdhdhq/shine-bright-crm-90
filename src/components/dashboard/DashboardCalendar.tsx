@@ -61,9 +61,8 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
         onSelect={setDate as any}
         className="rounded-md border pointer-events-auto"
         components={{
-          DayContent: (props) => {
-            const { day } = props as { day: Date };
-            return renderDayContent(day);
+          DayContent: ({ date, ...props }: any) => {
+            return renderDayContent(date);
           }
         }}
         initialFocus
