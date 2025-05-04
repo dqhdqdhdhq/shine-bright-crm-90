@@ -1,60 +1,36 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bell, Menu, Search } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 type HeaderProps = {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
 };
-
-const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
+const Header = ({
+  sidebarOpen,
+  setSidebarOpen
+}: HeaderProps) => {
   const isMobile = useIsMobile();
-
-  return (
-    <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 md:px-6">
+  return <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 md:px-6">
       <div className="flex items-center space-x-4 w-full">
-        {(!sidebarOpen || isMobile) && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="shrink-0"
-          >
+        {(!sidebarOpen || isMobile) && <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="shrink-0">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Toggle menu</span>
-          </Button>
-        )}
+          </Button>}
 
         <div className="flex items-center mr-4">
-          <img 
-            src="/lovable-uploads/3a24780e-ffd1-4e37-ae94-fc1b60b0a042.png" 
-            alt="Team Software Logo" 
-            className="h-8 mr-2" 
-          />
-          <span className="font-bold text-lg">Team Software</span>
+          
+          
         </div>
 
         <div className="hidden md:flex md:flex-1">
           <form className="flex-1 max-w-lg">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search..."
-                className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px]"
-              />
+              <Input type="search" placeholder="Search..." className="w-full bg-background pl-8 md:w-[300px] lg:w-[400px]" />
             </div>
           </form>
         </div>
@@ -110,10 +86,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative h-8 w-8 rounded-full"
-              >
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarFallback>AK</AvatarFallback>
                 </Avatar>
@@ -130,8 +103,6 @@ const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
           </DropdownMenu>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
-
 export default Header;
