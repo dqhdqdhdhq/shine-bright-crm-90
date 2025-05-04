@@ -149,7 +149,7 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
                 </div>
                 <div className="text-xs text-muted-foreground mt-1 flex items-center">
                   <Users className="mr-1 h-3 w-3" />
-                  {job.assignedStaff ? job.assignedStaff.join(", ") : "Unassigned"}
+                  {job.assignedStaffIds && job.assignedStaffIds.length > 0 ? job.assignedStaffIds.join(", ") : "Unassigned"}
                 </div>
                 <div className="flex justify-end gap-1 mt-2">
                   <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>

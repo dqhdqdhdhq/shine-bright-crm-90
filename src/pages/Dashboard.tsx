@@ -217,7 +217,7 @@ const Dashboard = () => {
                                 <div className="mt-1 text-xs text-muted-foreground">
                                   <span className="inline-flex items-center">
                                     <Users className="mr-1 h-3 w-3" />
-                                    {job.assignedStaff ? job.assignedStaff.join(", ") : "Unassigned"}
+                                    {job.assignedStaffIds && job.assignedStaffIds.length > 0 ? job.assignedStaffIds.join(", ") : "Unassigned"}
                                   </span>
                                 </div>
                               </div>
@@ -323,7 +323,7 @@ const Dashboard = () => {
                     </div>
                     <p 
                       className="text-sm text-muted-foreground cursor-pointer hover:text-foreground"
-                      onClick={() => handleQuickAction(`Go to ${activity.type}`)}
+                      onClick={() => handleQuickAction(`Go to ${activity.activity}`)}
                     >
                       {activity.activity}
                     </p>
@@ -361,34 +361,36 @@ const Dashboard = () => {
               }}
               className="aspect-[4/3]"
             >
-              <LineChart data={mockRevenueData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  padding={{ left: 10, right: 10 }}
-                />
-                <YAxis 
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
-                />
-                <RechartsTooltip formatter={(value) => [`$${value}`, "Revenue"]} />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  name="revenue"
-                  stroke="var(--color-revenue)"
-                  activeDot={{ r: 8 }}
-                />
-              </LineChart>
-              <ChartLegend>
-                <ChartLegendContent />
-              </ChartLegend>
+              <ResponsiveContainer>
+                <LineChart data={mockRevenueData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    padding={{ left: 10, right: 10 }}
+                  />
+                  <YAxis 
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `$${value}`}
+                  />
+                  <RechartsTooltip formatter={(value) => [`$${value}`, "Revenue"]} />
+                  <Line
+                    type="monotone"
+                    dataKey="value"
+                    name="revenue"
+                    stroke="var(--color-revenue)"
+                    activeDot={{ r: 8 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </ChartContainer>
+            <ChartLegend>
+              <ChartLegendContent />
+            </ChartLegend>
           </CardContent>
         </Card>
 
