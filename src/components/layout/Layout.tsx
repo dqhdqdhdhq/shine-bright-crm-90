@@ -14,7 +14,7 @@ const Layout = () => {
       <Sidebar isOpen={sidebarOpen && !isMobile} setIsOpen={setSidebarOpen} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main className="flex-1 overflow-y-auto p-4 pt-0 md:p-6 md:pt-0">
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>

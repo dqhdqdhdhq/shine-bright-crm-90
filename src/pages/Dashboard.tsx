@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, LineChart, ListChecks, Plus, Search, Users } from "lucide-react";
+import { Calendar, ChartBarIcon, ListCheck, Plus, Users } from "lucide-react";
 import { 
   mockDashboardStats, 
   getTodaysJobs,
@@ -19,7 +19,7 @@ const Dashboard = () => {
   const todaysJobs = getTodaysJobs();
   
   return (
-    <div className="space-y-6 py-6">
+    <div className="space-y-6 py-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -39,38 +39,42 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard 
           title="Today's Jobs" 
           value={mockDashboardStats.todaysJobs.toString()} 
-          description={`${mockDashboardStats.todaysJobs > 0 ? '↑ 12% from yesterday' : 'No change from yesterday'}`} 
-          icon={ListChecks} 
-          iconBg="bg-blue-100 dark:bg-blue-900/30" 
+          description="Jobs scheduled for today" 
+          icon={ListCheck} 
+          trend="up" 
+          trendValue="5%"
         />
         <StatsCard 
           title="Active Clients" 
           value={mockDashboardStats.activeClients.toString()} 
-          description="↑ 5% this month"
+          description="Total active clients" 
           icon={Users} 
-          iconBg="bg-indigo-100 dark:bg-indigo-900/30"
+          trend="up" 
+          trendValue="12%"
         />
         <StatsCard 
           title="Upcoming Jobs" 
           value={mockDashboardStats.upcomingJobs.toString()} 
-          description="For this week"
-          icon={CalendarDays} 
-          iconBg="bg-purple-100 dark:bg-purple-900/30"
+          description="Scheduled for this week" 
+          icon={Calendar} 
+          trend="unchanged" 
+          trendValue="0%"
         />
         <StatsCard 
           title="Monthly Revenue" 
           value={formatCurrency(mockDashboardStats.monthlyRevenue)} 
-          description="↑ 8% vs last month"
-          icon={LineChart} 
-          iconBg="bg-green-100 dark:bg-green-900/30"
+          description="For current month" 
+          icon={ChartBarIcon} 
+          trend="up" 
+          trendValue="8%"
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="col-span-1 lg:col-span-2">
           <CardHeader>
             <CardTitle>Schedule Overview</CardTitle>
@@ -98,16 +102,16 @@ const Dashboard = () => {
                     </div>
                   ) : (
                     todaysJobs.map((job) => (
-                      <Card key={job.id} className="overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                      <Card key={job.id} className="overflow-hidden">
                         <div className="flex flex-col md:flex-row">
                           <div 
-                            className="w-full md:w-1 h-1 md:h-auto"
+                            className="w-full md:w-2 h-2 md:h-auto"
                             style={{ 
                               backgroundColor: 
-                                job.status === 'completed' ? 'rgb(34, 197, 94)' : 
-                                job.status === 'in-progress' ? 'rgb(245, 158, 11)' : 
-                                job.status === 'cancelled' ? 'rgb(239, 68, 68)' : 
-                                'rgb(14, 165, 233)'
+                                job.status === 'completed' ? '#22c55e' : 
+                                job.status === 'in-progress' ? '#f59e0b' : 
+                                job.status === 'cancelled' ? '#ef4444' : 
+                                '#0ea5e9'
                             }}
                           />
                           <div className="p-4 flex-grow">
@@ -129,7 +133,7 @@ const Dashboard = () => {
                             </div>
                             <div className="mt-2 flex justify-between items-center">
                               <div className="flex items-center text-sm text-muted-foreground">
-                                <CalendarDays className="mr-1 h-3 w-3" />
+                                <Calendar className="mr-1 h-3 w-3" />
                                 {job.startTime} - {job.endTime}
                               </div>
                               <Button variant="ghost" size="sm" className="h-7">
@@ -192,7 +196,7 @@ const Dashboard = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Staff Performance</CardTitle>
@@ -239,33 +243,29 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center items-center">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                <div className="text-center">
-                  <span className="font-medium block">Schedule Job</span>
-                  <span className="text-xs text-muted-foreground">Create appointment</span>
-                </div>
+              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left">
+                <span className="font-medium">Schedule Job</span>
+                <span className="text-xs text-muted-foreground">
+                  Create a new job appointment
+                </span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center items-center">
-                <Users className="h-5 w-5 text-primary" />
-                <div className="text-center">
-                  <span className="font-medium block">Add Client</span>
-                  <span className="text-xs text-muted-foreground">Register new client</span>
-                </div>
+              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left">
+                <span className="font-medium">Add Client</span>
+                <span className="text-xs text-muted-foreground">
+                  Register a new client
+                </span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center items-center">
-                <Users className="h-5 w-5 text-primary" />
-                <div className="text-center">
-                  <span className="font-medium block">Staff Schedule</span>
-                  <span className="text-xs text-muted-foreground">View availability</span>
-                </div>
+              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left">
+                <span className="font-medium">Staff Availability</span>
+                <span className="text-xs text-muted-foreground">
+                  Check who's available
+                </span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center items-center">
-                <LineChart className="h-5 w-5 text-primary" />
-                <div className="text-center">
-                  <span className="font-medium block">Invoice</span>
-                  <span className="text-xs text-muted-foreground">Create and send</span>
-                </div>
+              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left">
+                <span className="font-medium">Generate Invoice</span>
+                <span className="text-xs text-muted-foreground">
+                  Create and send invoices
+                </span>
               </Button>
             </div>
           </CardContent>
