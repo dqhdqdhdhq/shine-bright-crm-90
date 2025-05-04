@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface DashboardCalendarProps {
   jobs: Job[];
@@ -101,6 +102,10 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
         return "bg-blue-500";
     }
   };
+
+  const handleAction = (action: string, jobId: string) => {
+    toast.success(`Action triggered: ${action} for job #${jobId}`);
+  };
   
   return (
     <div className="space-y-4">
@@ -152,8 +157,22 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
                   {job.assignedStaffIds && job.assignedStaffIds.length > 0 ? job.assignedStaffIds.join(", ") : "Unassigned"}
                 </div>
                 <div className="flex justify-end gap-1 mt-2">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs">Assign</Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 text-xs"
+                    onClick={() => handleAction("View", job.id)}
+                  >
+                    View
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 text-xs"
+                    onClick={() => handleAction("Assign", job.id)}
+                  >
+                    Assign
+                  </Button>
                 </div>
               </Card>
             ))}

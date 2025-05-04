@@ -43,6 +43,7 @@ import {
 const Dashboard = () => {
   const todaysJobs = getTodaysJobs();
   const [searchQuery, setSearchQuery] = useState("");
+  const [activityFilter, setActivityFilter] = useState("all");
   
   const mockRevenueData = [
     { name: "Jan", value: 4000 },
@@ -66,6 +67,22 @@ const Dashboard = () => {
   const handleMarkAsRead = (id: string) => {
     toast.success(`Marked notification ${id} as read`);
   };
+
+  const handleAddJob = () => {
+    toast.success("Starting new job creation process");
+  };
+  
+  const handleAddClient = () => {
+    toast.success("Starting new client creation process");
+  };
+
+  const handleStaffAction = (staffName: string, action: string) => {
+    toast.success(`${action} for ${staffName}`);
+  };
+
+  const handleResolveAlert = (alertId: number, alertTitle: string) => {
+    toast.success(`Resolved alert: ${alertTitle}`);
+  };
   
   return (
     <div className="space-y-6 py-6 animate-fade-in">
@@ -77,11 +94,11 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={handleAddJob}>
             <Plus className="h-4 w-4" />
             <span>New Job</span>
           </Button>
-          <Button className="gap-2" variant="outline">
+          <Button className="gap-2" variant="outline" onClick={handleAddClient}>
             <Plus className="h-4 w-4" />
             <span>New Client</span>
           </Button>
@@ -185,7 +202,12 @@ const Dashboard = () => {
                     <TabsTrigger value="jobs">Today's Jobs</TabsTrigger>
                     <TabsTrigger value="calendar">Calendar</TabsTrigger>
                   </TabsList>
-                  <Button variant="ghost" size="sm" className="h-7" onClick={() => handleQuickAction("View All Jobs")}>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7" 
+                    onClick={() => handleQuickAction("View All Jobs")}
+                  >
                     View All
                   </Button>
                 </div>
@@ -245,7 +267,7 @@ const Dashboard = () => {
                                         variant="ghost" 
                                         size="sm" 
                                         className="h-7"
-                                        onClick={() => handleQuickAction("Mark Complete")}
+                                        onClick={() => handleQuickAction("Mark Complete: " + job.id)}
                                       >
                                         Complete
                                       </Button>
@@ -260,7 +282,7 @@ const Dashboard = () => {
                                   variant="ghost" 
                                   size="sm" 
                                   className="h-7"
-                                  onClick={() => handleQuickAction("View Job Details")}
+                                  onClick={() => handleQuickAction("View Job Details: " + job.id)}
                                 >
                                   Details
                                 </Button>
@@ -288,14 +310,36 @@ const Dashboard = () => {
               <CardDescription>Latest updates from your clients</CardDescription>
             </div>
             <div className="flex gap-1">
-              <Button variant="outline" size="sm">All</Button>
-              <Button variant="ghost" size="sm">Jobs</Button>
-              <Button variant="ghost" size="sm">Clients</Button>
+              <Button 
+                variant={activityFilter === "all" ? "outline" : "ghost"} 
+                size="sm"
+                onClick={() => setActivityFilter("all")}
+              >
+                All
+              </Button>
+              <Button 
+                variant={activityFilter === "jobs" ? "outline" : "ghost"} 
+                size="sm"
+                onClick={() => setActivityFilter("jobs")}
+              >
+                Jobs
+              </Button>
+              <Button 
+                variant={activityFilter === "clients" ? "outline" : "ghost"} 
+                size="sm"
+                onClick={() => setActivityFilter("clients")}
+              >
+                Clients
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {mockDashboardStats.recentClientActivity.map((activity, i) => (
+              {mockDashboardStats.recentClientActivity
+                .filter(activity => activityFilter === "all" || 
+                  (activityFilter === "jobs" && activity.activity.toLowerCase().includes("job")) || 
+                  (activityFilter === "clients" && activity.activity.toLowerCase().includes("client")))
+                .map((activity, i) => (
                 <div key={activity.id} className="flex gap-4 group">
                   <div className="relative mt-1">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
@@ -334,7 +378,12 @@ const Dashboard = () => {
                 </div>
               ))}
 
-              <Button variant="outline" size="sm" className="w-full">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full"
+                onClick={() => handleQuickAction("View All Activity")}
+              >
                 View All Activity
               </Button>
             </div>
@@ -412,7 +461,7 @@ const Dashboard = () => {
                     <div>
                       <p 
                         className="text-sm font-medium cursor-pointer hover:text-primary"
-                        onClick={() => handleQuickAction(`View ${staff.name}'s Profile`)}
+                        onClick={() => handleStaffAction(staff.name, "View Profile")}
                       >
                         {staff.name}
                       </p>
@@ -452,7 +501,13 @@ const Dashboard = () => {
                 <CardTitle>Alerts & Notifications</CardTitle>
                 <CardDescription>Items requiring your attention</CardDescription>
               </div>
-              <Button variant="outline" size="sm">View All</Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleQuickAction("View All Alerts")}
+              >
+                View All
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -480,7 +535,7 @@ const Dashboard = () => {
                   <Button 
                     variant="ghost" 
                     size="sm"
-                    onClick={() => handleQuickAction(`Resolve: ${alert.title}`)}
+                    onClick={() => handleResolveAlert(alert.id, alert.title)}
                   >
                     Resolve
                   </Button>
@@ -497,25 +552,41 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left" onClick={() => handleQuickAction("Schedule Job")}>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2 justify-center text-left" 
+                onClick={() => handleQuickAction("Schedule Job")}
+              >
                 <span className="font-medium">Schedule Job</span>
                 <span className="text-xs text-muted-foreground">
                   Create a new job appointment
                 </span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left" onClick={() => handleQuickAction("Add Client")}>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2 justify-center text-left" 
+                onClick={() => handleQuickAction("Add Client")}
+              >
                 <span className="font-medium">Add Client</span>
                 <span className="text-xs text-muted-foreground">
                   Register a new client
                 </span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left" onClick={() => handleQuickAction("Staff Availability")}>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2 justify-center text-left" 
+                onClick={() => handleQuickAction("Staff Availability")}
+              >
                 <span className="font-medium">Staff Availability</span>
                 <span className="text-xs text-muted-foreground">
                   Check who's available
                 </span>
               </Button>
-              <Button variant="outline" className="h-20 flex flex-col gap-2 justify-center text-left" onClick={() => handleQuickAction("Generate Invoice")}>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col gap-2 justify-center text-left" 
+                onClick={() => handleQuickAction("Generate Invoice")}
+              >
                 <span className="font-medium">Generate Invoice</span>
                 <span className="text-xs text-muted-foreground">
                   Create and send invoices
