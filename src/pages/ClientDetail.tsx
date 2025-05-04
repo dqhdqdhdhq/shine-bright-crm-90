@@ -10,7 +10,7 @@ import {
   CalendarDays, Edit, Mail, MapPin, Phone, Plus, ArrowLeft, AlertCircle,
   MessageSquare, FileText, Clock, DollarSign, Repeat, PenTool
 } from 'lucide-react';
-import { getClientById, getJobsByClientId } from '@/data/mockData';
+import { getClientById, getJobsByClientId, getStaffById } from '@/data/mockData';
 import { formatPhoneNumber, getInitials } from '@/lib/utils';
 import NotFound from './NotFound';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -34,7 +34,12 @@ const ClientDetail = () => {
   // Calculate key metrics
   const totalJobs = clientJobs.length;
   const completedJobs = clientJobs.filter(job => job.status === 'completed').length;
-  const totalBilled = clientJobs.reduce((sum, job) => sum + (job.amount || 0), 0);
+  // Using a mock amount value since the Job type doesn't have an amount field
+  const totalBilled = clientJobs.reduce((sum, job) => {
+    // For display purposes, we'll use a mock value of $100 per job
+    const jobAmount = 100; // Mock value
+    return sum + jobAmount;
+  }, 0);
   const avgJobValue = totalJobs > 0 ? totalBilled / totalJobs : 0;
   const lastServiceDate = client.lastService || 'Never';
 
@@ -53,6 +58,15 @@ const ClientDetail = () => {
   const handleQuickAction = (action, type) => {
     setCommunicationType(type);
     setShowCommunicationDialog(true);
+  };
+
+  // Helper function to get staff names from IDs
+  const getStaffNames = (staffIds) => {
+    if (!staffIds || staffIds.length === 0) return 'Unassigned';
+    return staffIds.map(id => {
+      const staff = getStaffById(id);
+      return staff ? staff.name : 'Unknown';
+    }).join(', ');
   };
 
   return (
@@ -411,7 +425,7 @@ const ClientDetail = () => {
                           <TableCell className="font-medium">{job.serviceName}</TableCell>
                           <TableCell>{job.date}</TableCell>
                           <TableCell>{job.startTime} - {job.endTime}</TableCell>
-                          <TableCell>{job.assignedStaff || 'Unassigned'}</TableCell>
+                          <TableCell>{getStaffNames(job.assignedStaffIds)}</TableCell>
                           <TableCell>
                             <Badge 
                               variant={
@@ -424,7 +438,7 @@ const ClientDetail = () => {
                               {job.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>${job.amount || '--'}</TableCell>
+                          <TableCell>$100</TableCell>
                           <TableCell className="text-right space-x-2">
                             <Button variant="ghost" size="sm">View</Button>
                             <Button variant="ghost" size="sm" className="gap-1">
@@ -478,7 +492,7 @@ const ClientDetail = () => {
                         <TableRow key={index}>
                           <TableCell>{job.date}</TableCell>
                           <TableCell>INV-{1000 + index}</TableCell>
-                          <TableCell>${job.amount || 0}</TableCell>
+                          <TableCell>$100</TableCell>
                           <TableCell>
                             <Badge variant={
                               index % 3 === 0 ? "default" : 
@@ -523,7 +537,7 @@ const ClientDetail = () => {
                       {clientJobs.slice(0, 3).map((job, index) => (
                         <TableRow key={index}>
                           <TableCell>{job.date}</TableCell>
-                          <TableCell>${job.amount || 0}</TableCell>
+                          <TableCell>$100</TableCell>
                           <TableCell>{index % 2 === 0 ? "Credit Card" : "Bank Transfer"}</TableCell>
                           <TableCell>REF-{2000 + index}</TableCell>
                         </TableRow>
