@@ -42,6 +42,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { 
+  Form,
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel,
+  FormMessage 
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import {
   Edit,
   Filter,
   ListFilter,
@@ -81,7 +99,11 @@ import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientQuickView } from "@/components/clients/ClientQuickView";
 import { ClientBulkActions } from "@/components/clients/ClientBulkActions";
 import { ClientColumnSelector } from "@/components/clients/ClientColumnSelector";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { ScheduleJobDialog } from "@/components/schedule/ScheduleJobDialog";
 
 // Client status types
 export type ClientStatus = "lead" | "prospect" | "active" | "on-hold" | "inactive" | "lost";
@@ -108,6 +130,28 @@ const Clients = () => {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [isColumnSelectorOpen, setIsColumnSelectorOpen] = useState(false);
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<ClientStatus>("active");
+  const [localClients, setLocalClients] = useState(mockClients);
+  
+  // Form for adding new client
+  const form = useForm<ClientFormValues>({
+    resolver: zodResolver(clientFormSchema),
+    defaultValues: {
+      name: "",
+      type: "residential",
+      contactName: "",
+      email: "",
+      phone: "",
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      tags: "",
+      status: "lead",
+      notes: "",
+    },
+  });
   
   // Column visibility state
   const [visibleColumns, setVisibleColumns] = useState<ClientColumn[]>([
@@ -132,7 +176,7 @@ const Clients = () => {
   });
 
   // Filter clients based on all criteria
-  const filteredClients = mockClients.filter((client) => {
+  const filteredClients = localClients.filter((client) => {
     // Filter by type
     if (filterType !== "all" && client.type !== filterType) {
       return false;
@@ -194,10 +238,10 @@ const Clients = () => {
   });
 
   // Count clients by type
-  const residentialCount = mockClients.filter(
+  const residentialCount = localClients.filter(
     (client) => client.type === "residential"
   ).length;
-  const commercialCount = mockClients.filter(
+  const commercialCount = localClients.filter(
     (client) => client.type === "commercial"
   ).length;
 
@@ -234,6 +278,51 @@ const Clients = () => {
     });
   };
 
+  // Handle adding a new client
+  const onSubmitNewClient = (data: ClientFormValues) => {
+    console.log("Adding new client:", data);
+    // Generate a unique ID
+    const newId = `client-${Date.now()}`;
+    
+    // Create a new client object
+    const newClient: Client = {
+      id: newId,
+      name: data.name,
+      type: data.type,
+      contacts: [
+        {
+          name: data.contactName,
+          email: data.email,
+          phone: data.phone,
+          isPrimary: true,
+        },
+      ],
+      addresses: [
+        {
+          street: data.street,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+        },
+      ],
+      tags: data.tags ? data.tags.split(',').map(tag => tag.trim()) : [],
+      lastService: null,
+    };
+    
+    // Add the new client to the local state
+    setLocalClients(prevClients => [newClient, ...prevClients]);
+    
+    // Reset the form and close the dialog
+    form.reset();
+    setIsAddClientDialogOpen(false);
+    
+    // Show success toast
+    toast({
+      title: "Client added",
+      description: `${data.name} has been added successfully.`,
+    });
+  };
+
   return (
     <div className="space-y-6 py-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
@@ -247,41 +336,269 @@ const Clients = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-1">
-                <CircleDot className="h-4 w-4" />
-                Status
+                <CircleDot className="h-4 w-4" color={
+                  selectedStatus === "lead" ? "blue" : 
+                  selectedStatus === "prospect" ? "indigo" :
+                  selectedStatus === "active" ? "green" :
+                  selectedStatus === "on-hold" ? "orange" :
+                  selectedStatus === "inactive" ? "gray" : "red"
+                } />
+                {selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange("lead")}>
                 <CircleDot className="h-4 w-4 mr-2 text-blue-500" />
                 Lead
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange("prospect")}>
                 <CircleDot className="h-4 w-4 mr-2 text-indigo-500" />
                 Prospect
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange("active")}>
                 <CircleDot className="h-4 w-4 mr-2 text-green-500" />
                 Active
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange("on-hold")}>
                 <CircleDot className="h-4 w-4 mr-2 text-orange-500" />
                 On Hold
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange("inactive")}>
                 <CircleDot className="h-4 w-4 mr-2 text-gray-500" />
                 Inactive
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusChange("lost")}>
                 <CircleDot className="h-4 w-4 mr-2 text-red-500" />
                 Lost
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button className="gap-2">
-            <Plus className="h-4 w-4" />
-            <span>Add New Client</span>
-          </Button>
+          
+          <Dialog open={isAddClientDialogOpen} onOpenChange={setIsAddClientDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                <span>Add New Client</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Add New Client</DialogTitle>
+                <DialogDescription>
+                  Fill out the form below to add a new client to your system.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmitNewClient)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter client name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Client Type</FormLabel>
+                          <FormControl>
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              {...field}
+                            >
+                              <option value="residential">Residential</option>
+                              <option value="commercial">Commercial</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="contactName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Contact Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter contact name" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Status</FormLabel>
+                          <FormControl>
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              {...field}
+                            >
+                              <option value="lead">Lead</option>
+                              <option value="prospect">Prospect</option>
+                              <option value="active">Active</option>
+                              <option value="on-hold">On Hold</option>
+                              <option value="inactive">Inactive</option>
+                              <option value="lost">Lost</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="Enter email" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter phone number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="street"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Street Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter street address" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>City</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter city" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>State</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter state" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Zip Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter zip code" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="tags"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tags (comma separated)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="VIP, Monthly, Special Instructions" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Enter any additional notes here..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsAddClientDialogOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit">Add Client</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -388,7 +705,6 @@ const Clients = () => {
                   selectedClients={selectedClients}
                   toggleSelectAll={toggleSelectAll}
                   toggleClientSelection={toggleClientSelection}
-                  openQuickView={openQuickView}
                   visibleColumns={visibleColumns}
                 />
               </TabsContent>
@@ -400,7 +716,6 @@ const Clients = () => {
                   selectedClients={selectedClients}
                   toggleSelectAll={toggleSelectAll}
                   toggleClientSelection={toggleClientSelection}
-                  openQuickView={openQuickView}
                   visibleColumns={visibleColumns}
                 />
               </TabsContent>
@@ -412,7 +727,6 @@ const Clients = () => {
                   selectedClients={selectedClients}
                   toggleSelectAll={toggleSelectAll}
                   toggleClientSelection={toggleClientSelection}
-                  openQuickView={openQuickView}
                   visibleColumns={visibleColumns}
                 />
               </TabsContent>
@@ -510,7 +824,6 @@ interface ClientListProps {
   selectedClients: string[];
   toggleSelectAll: () => void;
   toggleClientSelection: (clientId: string) => void;
-  openQuickView: (client: Client) => void;
   visibleColumns: ClientColumn[];
 }
 
@@ -519,7 +832,6 @@ const ClientList: React.FC<ClientListProps> = ({
   selectedClients,
   toggleSelectAll,
   toggleClientSelection,
-  openQuickView,
   visibleColumns
 }) => {
   if (clients.length === 0) {
@@ -619,14 +931,6 @@ const ClientList: React.FC<ClientListProps> = ({
                 </TableCell>
                 <TableCell className="py-3">
                   <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => openQuickView(client)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
                     <div>
                       <Link
                         to={`/clients/${client.id}`}

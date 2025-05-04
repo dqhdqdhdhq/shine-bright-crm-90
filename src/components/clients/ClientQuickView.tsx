@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { formatPhoneNumber } from "@/lib/utils";
+import { Link } from "react-router-dom";
 import { 
   Phone, 
   Mail, 
@@ -18,16 +19,69 @@ import {
   DollarSign,
   User,
   MessageSquare,
-  ChevronDown
+  ChevronDown,
+  Edit,
+  FileText,
+  Plus,
 } from "lucide-react";
+import { ScheduleJobDialog } from "@/components/schedule/ScheduleJobDialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClientQuickViewProps {
   client: Client;
 }
 
+const clientEditFormSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email." }),
+  phone: z.string().min(10, { message: "Please enter a valid phone number." }),
+  street: z.string().min(3, { message: "Street address is required." }),
+  city: z.string().min(2, { message: "City is required." }),
+  state: z.string().min(2, { message: "State is required." }),
+  zipCode: z.string().min(5, { message: "Zip code is required." }),
+  notes: z.string().optional(),
+});
+
 export const ClientQuickView: React.FC<ClientQuickViewProps> = ({ client }) => {
   const primaryContact = client.contacts.find((c) => c.isPrimary) || client.contacts[0];
   const primaryAddress = client.addresses[0];
+  const { toast } = useToast();
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [isJobsDialogOpen, setIsJobsDialogOpen] = React.useState(false);
+
+  const form = useForm<z.infer<typeof clientEditFormSchema>>({
+    resolver: zodResolver(clientEditFormSchema),
+    defaultValues: {
+      name: client.name,
+      email: primaryContact.email,
+      phone: primaryContact.phone,
+      street: primaryAddress.street,
+      city: primaryAddress.city,
+      state: primaryAddress.state,
+      zipCode: primaryAddress.zipCode,
+      notes: "",
+    },
+  });
+  
+  function onSubmitEdit(data: z.infer<typeof clientEditFormSchema>) {
+    // In a real app, we would save this to the backend
+    console.log("Edited client data:", data);
+    
+    toast({
+      title: "Client updated",
+      description: `${data.name} has been updated successfully.`,
+    });
+    
+    setIsEditOpen(false);
+  }
 
   return (
     <div className="space-y-6">
@@ -152,23 +206,215 @@ export const ClientQuickView: React.FC<ClientQuickViewProps> = ({ client }) => {
 
       {/* Quick Actions */}
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" className="gap-1">
-          <Phone className="h-3.5 w-3.5" />
-          Call
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1">
-          <Mail className="h-3.5 w-3.5" />
-          Email
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1">
-          <CalendarDays className="h-3.5 w-3.5" />
-          Schedule
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1">
-          <MessageSquare className="h-3.5 w-3.5" />
-          Add Note
-        </Button>
+        <Link to={`/clients/${client.id}`}>
+          <Button variant="default" size="sm" className="gap-1">
+            <FileText className="h-3.5 w-3.5" />
+            View Profile
+          </Button>
+        </Link>
+        <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1">
+              <Edit className="h-3.5 w-3.5" />
+              Edit
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[550px]">
+            <DialogHeader>
+              <DialogTitle>Edit Client</DialogTitle>
+              <DialogDescription>
+                Make changes to client information below.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmitEdit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="street"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Street</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="zipCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Zip Code</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="Add additional notes..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+        
+        <ScheduleJobDialog 
+          client={client}
+          triggerButton={
+            <Button variant="outline" size="sm" className="gap-1">
+              <CalendarDays className="h-3.5 w-3.5" />
+              Schedule
+            </Button>
+          }
+        />
+        
+        <Dialog open={isJobsDialogOpen} onOpenChange={setIsJobsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-1">
+              <FileText className="h-3.5 w-3.5" />
+              View Jobs
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[650px]">
+            <DialogHeader>
+              <DialogTitle>Jobs for {client.name}</DialogTitle>
+              <DialogDescription>
+                View upcoming and past jobs for this client.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <Tabs defaultValue="upcoming">
+              <TabsList className="grid grid-cols-2 w-full">
+                <TabsTrigger value="upcoming">Upcoming Jobs</TabsTrigger>
+                <TabsTrigger value="past">Past Jobs</TabsTrigger>
+              </TabsList>
+              <TabsContent value="upcoming" className="mt-4 border rounded-md p-4">
+                <div className="text-center py-8 text-muted-foreground">
+                  No upcoming jobs scheduled.
+                </div>
+              </TabsContent>
+              <TabsContent value="past" className="mt-4 border rounded-md p-4">
+                <div className="text-center py-8 text-muted-foreground">
+                  No past jobs found.
+                </div>
+              </TabsContent>
+            </Tabs>
+            
+            <DialogFooter>
+              <ScheduleJobDialog
+                client={client}
+                triggerButton={
+                  <Button className="gap-1">
+                    <Plus className="h-3.5 w-3.5" />
+                    Schedule New Job
+                  </Button>
+                }
+              />
+              <Button type="button" variant="outline" onClick={() => setIsJobsDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
 };
+

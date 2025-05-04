@@ -22,14 +22,15 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { mockClients, mockServices, mockStaff } from "@/data/mockData";
+import { mockClients, mockServices, mockStaff, Client } from "@/data/mockData";
+import { Textarea } from "@/components/ui/textarea";
 
 const scheduleJobFormSchema = z.object({
   clientId: z.string({ required_error: "Please select a client" }),
@@ -43,37 +44,70 @@ const scheduleJobFormSchema = z.object({
 
 type ScheduleJobFormValues = z.infer<typeof scheduleJobFormSchema>;
 
-export function ScheduleJobDialog() {
+interface ScheduleJobDialogProps {
+  client?: Client;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  triggerButton?: React.ReactNode;
+}
+
+export function ScheduleJobDialog({ 
+  client, 
+  open: controlledOpen, 
+  onOpenChange: setControlledOpen,
+  triggerButton
+}: ScheduleJobDialogProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const { toast } = useToast();
+  
+  // Use either controlled or uncontrolled open state
+  const open = controlledOpen !== undefined ? controlledOpen : isOpen;
+  const setOpen = setControlledOpen || setIsOpen;
   
   const form = useForm<ScheduleJobFormValues>({
     resolver: zodResolver(scheduleJobFormSchema),
     defaultValues: {
+      clientId: client?.id || "",
       notes: "",
     },
   });
+
+  // Reset form when client changes
+  React.useEffect(() => {
+    if (client) {
+      form.setValue('clientId', client.id);
+    }
+  }, [client, form]);
 
   function onSubmit(data: ScheduleJobFormValues) {
     // In a real app, we would save this to the backend
     console.log("Scheduling job:", data);
     
+    const clientName = mockClients.find(c => c.id === data.clientId)?.name || "Selected client";
+    
     toast({
       title: "Job scheduled",
-      description: `Scheduled for ${format(data.date, "MMM d, yyyy")} at ${data.startTime}`,
+      description: `Scheduled for ${clientName} on ${format(data.date, "MMM d, yyyy")} at ${data.startTime}`,
     });
     
-    setIsOpen(false);
+    setOpen(false);
     form.reset();
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          <span>Schedule New Job</span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
+      {triggerButton ? (
+        <DialogTrigger asChild>
+          {triggerButton}
+        </DialogTrigger>
+      ) : (
+        <DialogTrigger asChild>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            <span>Schedule New Job</span>
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Schedule New Job</DialogTitle>
@@ -90,7 +124,12 @@ export function ScheduleJobDialog() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Client</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      value={field.value}
+                      disabled={!!client}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select client" />
@@ -239,7 +278,11 @@ export function ScheduleJobDialog() {
                 <FormItem>
                   <FormLabel>Notes (Optional)</FormLabel>
                   <FormControl>
-                    <Input placeholder="Add any additional details here" {...field} />
+                    <Textarea 
+                      placeholder="Add any additional details here" 
+                      className="min-h-[100px]" 
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -247,7 +290,7 @@ export function ScheduleJobDialog() {
             />
             
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit">Schedule Job</Button>
@@ -258,3 +301,4 @@ export function ScheduleJobDialog() {
     </Dialog>
   );
 }
+
