@@ -49,6 +49,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import ServiceForm from "@/components/services/ServiceForm";
+import { useToast } from "@/components/ui/use-toast";
 
 type ViewMode = "card" | "list";
 
@@ -61,6 +63,7 @@ type FilterState = {
 };
 
 const Services = () => {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("card");
@@ -70,15 +73,18 @@ const Services = () => {
     priceType: "all",
     status: "all",
   });
+  const [services, setServices] = useState<Service[]>(mockServices);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
 
   // Get unique categories for filter dropdown
   const categories = useMemo(() => {
-    const allCategories = mockServices.map((service) => service.category);
+    const allCategories = services.map((service) => service.category);
     return Array.from(new Set(allCategories)).filter(Boolean) as ServiceCategory[];
-  }, []);
+  }, [services]);
 
   const filteredServices = useMemo(() => {
-    return mockServices.filter((service) => {
+    return services.filter((service) => {
       // Search filter
       const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase());
       
@@ -104,14 +110,60 @@ const Services = () => {
       
       return matchesSearch && matchesCategory && matchesClientType && matchesPriceType && matchesStatus;
     });
-  }, [searchTerm, filters]);
+  }, [searchTerm, filters, services]);
 
   const handleServiceClick = (service: Service) => {
     setSelectedService(service);
   };
 
-  const closeDialog = () => {
+  const closeDetailsDialog = () => {
     setSelectedService(null);
+  };
+
+  const openNewServiceForm = () => {
+    setEditingService(null);
+    setIsFormOpen(true);
+  };
+
+  const openEditServiceForm = (service: Service) => {
+    setEditingService(service);
+    setIsFormOpen(true);
+  };
+
+  const closeServiceForm = () => {
+    setEditingService(null);
+    setIsFormOpen(false);
+  };
+
+  const handleSaveService = (serviceData: any) => {
+    // In a real app, we would make API calls here
+    // For this example, we'll just update the local state
+    
+    if (editingService) {
+      // Update existing service
+      setServices((prev) => 
+        prev.map((s) => (s.id === editingService.id ? { ...serviceData, id: editingService.id } : s))
+      );
+      toast({
+        title: "Service Updated",
+        description: `${serviceData.name} has been updated successfully.`,
+      });
+    } else {
+      // Create new service
+      const newService = {
+        ...serviceData,
+        id: `service-${Date.now()}`, // Generate a unique ID
+        createdAt: new Date().toISOString(),
+      };
+      setServices((prev) => [...prev, newService]);
+      toast({
+        title: "Service Created",
+        description: `${serviceData.name} has been created successfully.`,
+      });
+    }
+    
+    // Close the form dialog
+    setIsFormOpen(false);
   };
 
   const handleFilterChange = (
@@ -153,7 +205,7 @@ const Services = () => {
               <LayoutGrid className="h-4 w-4" />
             )}
           </Button>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={openNewServiceForm}>
             <Plus className="h-4 w-4" />
             <span>Add New Service</span>
           </Button>
@@ -356,7 +408,14 @@ const Services = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="w-full gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditServiceForm(service);
+                    }}
+                  >
                     <Edit className="h-4 w-4" />
                     <span>Edit Service</span>
                   </Button>
@@ -466,7 +525,14 @@ const Services = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditServiceForm(service);
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -489,11 +555,36 @@ const Services = () => {
         </div>
       )}
 
+      {/* Service Details Dialog */}
       <ServiceDetailsDialog
         service={selectedService}
         open={!!selectedService}
-        onClose={closeDialog}
+        onClose={closeDetailsDialog}
+        onEdit={openEditServiceForm}
       />
+
+      {/* Service Form Dialog */}
+      <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeServiceForm()}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingService ? "Edit Service" : "Create New Service"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingService
+                ? "Update the details for this service"
+                : "Fill in the details to create a new service"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ServiceForm
+            service={editingService}
+            onSave={handleSaveService}
+            onCancel={closeServiceForm}
+            availableCategories={categories}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
@@ -502,12 +593,14 @@ interface ServiceDetailsDialogProps {
   service: Service | null;
   open: boolean;
   onClose: () => void;
+  onEdit: (service: Service) => void;
 }
 
 const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
   service,
   open,
   onClose,
+  onEdit,
 }) => {
   if (!service) return null;
 
@@ -628,7 +721,13 @@ const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
           <Button variant="outline" onClick={onClose}>
             Close
           </Button>
-          <Button className="gap-2">
+          <Button 
+            className="gap-2"
+            onClick={() => {
+              onClose();
+              onEdit(service);
+            }}
+          >
             <Edit className="h-4 w-4" />
             Edit Service
           </Button>
