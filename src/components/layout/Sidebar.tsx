@@ -41,15 +41,21 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       <div className="flex items-center justify-between h-16 px-4 border-b">
         <div className="flex items-center space-x-2">
           {isOpen ? (
-            <>
-              <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-                <span className="text-white font-bold">SC</span>
-              </div>
-              <h1 className="text-lg font-bold">Shine CRM</h1>
-            </>
+            <div className="flex items-center">
+              <img 
+                src="/lovable-uploads/c5daf843-b099-42d9-b425-ddf2549761d9.png" 
+                alt="Pancevski's Städservice Logo" 
+                className="h-10" 
+              />
+              <span className="ml-2 text-lg font-bold">Team Software</span>
+            </div>
           ) : (
-            <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
-              <span className="text-white font-bold">SC</span>
+            <div className="flex items-center justify-center">
+              <img 
+                src="/lovable-uploads/c5daf843-b099-42d9-b425-ddf2549761d9.png" 
+                alt="Pancevski's Städservice Logo" 
+                className="h-8" 
+              />
             </div>
           )}
         </div>
