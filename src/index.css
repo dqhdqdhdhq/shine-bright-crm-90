@@ -113,14 +113,16 @@
 }
 
 /* Custom style for the sidebar */
-.sidebar {
-  @apply bg-sidebar-background text-sidebar-foreground;
-}
+@layer components {
+  .sidebar {
+    @apply bg-sidebar-background text-sidebar-foreground;
+  }
 
-.sidebar-item {
-  @apply flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-sidebar-accent;
-}
+  .sidebar-item {
+    @apply flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors hover:bg-sidebar-accent;
+  }
 
-.sidebar-item.active {
-  @apply bg-sidebar-accent;
+  .sidebar-item.active {
+    @apply bg-sidebar-accent;
+  }
 }
