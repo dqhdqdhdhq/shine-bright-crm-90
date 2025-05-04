@@ -22,21 +22,31 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
     return acc;
   }, {} as Record<string, Job[]>);
 
-  // Function to render calendar day content
+  // Function to render calendar day content with job indicators
   const renderDayContent = (day: Date) => {
-    const dateString = format(day, "yyyy-MM-dd");
-    const dayJobs = jobsByDate[dateString] || [];
-    const hasJobs = dayJobs.length > 0;
-    
-    if (!hasJobs) return null;
+    try {
+      // Make sure day is a valid Date object
+      if (!(day instanceof Date) || isNaN(day.getTime())) {
+        return null;
+      }
+      
+      const dateString = format(day, "yyyy-MM-dd");
+      const dayJobs = jobsByDate[dateString] || [];
+      const hasJobs = dayJobs.length > 0;
+      
+      if (!hasJobs) return null;
 
-    return (
-      <div className="flex justify-center mt-1">
-        <Badge variant="outline" className="h-1 w-1 rounded-full p-0">
-          <span className="sr-only">{dayJobs.length} jobs</span>
-        </Badge>
-      </div>
-    );
+      return (
+        <div className="flex justify-center mt-1">
+          <Badge variant="outline" className="h-1 w-1 rounded-full p-0">
+            <span className="sr-only">{dayJobs.length} jobs</span>
+          </Badge>
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering day content:", error);
+      return null;
+    }
   };
 
   // Show jobs for selected date
@@ -49,9 +59,12 @@ const DashboardCalendar = ({ jobs }: DashboardCalendarProps) => {
         mode="single"
         selected={date}
         onSelect={setDate as any}
-        className="rounded-md border"
+        className="rounded-md border pointer-events-auto"
         components={{
-          DayContent: ({ day }) => renderDayContent(day),
+          DayContent: (props) => {
+            const { day } = props as { day: Date };
+            return renderDayContent(day);
+          }
         }}
         initialFocus
       />
