@@ -37,6 +37,15 @@ const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
           </Button>
         )}
 
+        <div className="flex items-center mr-4">
+          <img 
+            src="/lovable-uploads/3a24780e-ffd1-4e37-ae94-fc1b60b0a042.png" 
+            alt="Team Software Logo" 
+            className="h-8 mr-2" 
+          />
+          <span className="font-bold text-lg">Team Software</span>
+        </div>
+
         <div className="hidden md:flex md:flex-1">
           <form className="flex-1 max-w-lg">
             <div className="relative">
