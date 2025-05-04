@@ -1,30 +1,19 @@
-
 import React from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Cog, Wallet, ArrowUpRight, TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import FinanceNavigation from "@/components/finance/FinanceNavigation";
-
 const FinanceDashboard = () => {
-  const { t } = useLanguage();
-
-  return (
-    <div className="container mx-auto py-6 space-y-6">
+  const {
+    t
+  } = useLanguage();
+  return <div className="container mx-auto py-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{t("finance.dashboard")}</h1>
-        <Button variant="outline">
-          <Cog className="mr-2 h-4 w-4" />
-          {t("finance.dashboard.customize")}
-        </Button>
+        
       </div>
 
       <FinanceNavigation />
@@ -173,8 +162,6 @@ const FinanceDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default FinanceDashboard;
