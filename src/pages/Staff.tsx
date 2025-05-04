@@ -48,8 +48,8 @@ import StaffListView from "@/components/staff/StaffListView";
 import StaffForm from "@/components/staff/StaffForm";
 import { toast } from "sonner";
 
-// Add status field to mock staff with correct typing
-const mockStaffWithStatus = mockStaff.map((staff, index) => ({
+// Add status field to mock staff with correct typing 
+const mockStaffWithStatus: StaffMember[] = mockStaff.map((staff, index) => ({
   ...staff,
   status: index % 10 === 0 
     ? "on-leave" as const 
