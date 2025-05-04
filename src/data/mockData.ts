@@ -70,6 +70,14 @@ export interface StaffMember {
   hireDate: string;
   avatar?: string;
   status?: 'active' | 'on-leave' | 'terminated';
+  // Add the missing properties
+  emergencyContact?: {
+    name: string;
+    phone: string;
+  };
+  address?: string;
+  payRate?: string;
+  notes?: string;
 }
 
 // Job/Schedule Types
