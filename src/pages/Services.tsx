@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -18,18 +17,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Edit,
   Plus,
   Search,
-  Filter,
-  X,
   ChevronRight,
   Clock,
   Users,
@@ -44,66 +34,27 @@ import { formatCurrency } from "@/lib/utils";
 import ServiceForm from "@/components/services/ServiceForm";
 import { useToast } from "@/components/ui/use-toast";
 
-// Filter options
-type FilterState = {
-  category: ServiceCategory | "all";
-  clientType: ClientType | "both" | "all";
-  status: "active" | "inactive" | "all";
-};
-
 const Services = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<FilterState>({
-    category: "all",
-    clientType: "all",
-    status: "active", // Default to active services only
-  });
   const [services, setServices] = useState<Service[]>(mockServices);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
-  // Get unique categories for filter dropdown
-  const categories = useMemo(() => {
-    const allCategories = services.map((service) => service.category);
-    return Array.from(new Set(allCategories)).filter(Boolean) as ServiceCategory[];
-  }, [services]);
-
+  // Smart filtering based on search term
   const filteredServices = useMemo(() => {
+    if (!searchTerm) return services.filter(s => s.isActive !== false);
+    
     return services.filter((service) => {
-      // Search filter
-      const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           service.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      // Category filter
-      const matchesCategory = 
-        filters.category === "all" || service.category === filters.category;
-      
-      // Client type filter
-      const matchesClientType =
-        filters.clientType === "all" || 
-        service.clientType === filters.clientType || 
-        service.clientType === "both";
-      
-      // Status filter
-      const matchesStatus =
-        filters.status === "all" ||
-        (filters.status === "active" && service.isActive !== false) ||
-        (filters.status === "inactive" && service.isActive === false);
-      
-      return matchesSearch && matchesCategory && matchesClientType && matchesStatus;
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        service.name.toLowerCase().includes(searchLower) ||
+        service.description.toLowerCase().includes(searchLower) ||
+        service.category?.toLowerCase().includes(searchLower)
+      ) && service.isActive !== false;
     });
-  }, [searchTerm, filters, services]);
-
-  const activeFilterCount = useMemo(() => {
-    let count = 0;
-    if (filters.category !== "all") count++;
-    if (filters.clientType !== "all") count++;
-    if (filters.status !== "active") count++; // active is default
-    return count;
-  }, [filters]);
+  }, [searchTerm, services]);
 
   const handleServiceClick = (service: Service) => {
     setSelectedService(service);
@@ -152,180 +103,48 @@ const Services = () => {
     setIsFormOpen(false);
   };
 
-  const handleFilterChange = (
-    key: keyof FilterState,
-    value: FilterState[keyof FilterState]
-  ) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const resetFilters = () => {
-    setFilters({
-      category: "all",
-      clientType: "all",
-      status: "active",
-    });
-    setSearchTerm("");
-    setShowFilters(false);
-  };
-
-  const clearFilter = (key: keyof FilterState) => {
-    if (key === "status") {
-      setFilters((prev) => ({ ...prev, [key]: "active" }));
-    } else {
-      setFilters((prev) => ({ ...prev, [key]: "all" }));
-    }
-  };
+  const categories = useMemo(() => {
+    const allCategories = services.map((service) => service.category);
+    return Array.from(new Set(allCategories)).filter(Boolean) as ServiceCategory[];
+  }, [services]);
 
   return (
-    <div className="min-h-screen bg-gray-50/50">
+    <div className="min-h-screen bg-gray-50">
       {/* Clean Header */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-semibold text-gray-900">Services</h1>
-              <p className="text-gray-500 mt-1">
-                {filteredServices.length} {filteredServices.length === 1 ? 'service' : 'services'}
+              <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">Services</h1>
+              <p className="text-gray-500 mt-1 font-medium">
+                {filteredServices.length} active services
               </p>
             </div>
             <Button 
               onClick={openNewServiceForm}
-              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium shadow-sm transition-colors"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Service
             </Button>
           </div>
 
-          {/* Smart Search Bar */}
-          <div className="mt-6 flex items-center gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="Search services..."
-                className="pl-10 border-gray-200 bg-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className={`gap-2 ${activeFilterCount > 0 ? 'bg-blue-50 border-blue-200 text-blue-700' : ''}`}
-            >
-              <Filter className="h-4 w-4" />
-              Filters
-              {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </Button>
+          {/* Smart Search */}
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              type="search"
+              placeholder="Search services..."
+              className="pl-10 h-11 border-gray-200 bg-white rounded-lg text-gray-900 placeholder-gray-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-
-          {/* Filter Panel */}
-          {showFilters && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
-                  <Select
-                    value={filters.category}
-                    onValueChange={(value) =>
-                      handleFilterChange("category", value as ServiceCategory | "all")
-                    }
-                  >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {category.charAt(0).toUpperCase() + category.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Client Type</label>
-                  <Select
-                    value={filters.clientType}
-                    onValueChange={(value) =>
-                      handleFilterChange("clientType", value as ClientType | "both" | "all")
-                    }
-                  >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="residential">Residential</SelectItem>
-                      <SelectItem value="commercial">Commercial</SelectItem>
-                      <SelectItem value="both">Both</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
-                  <Select
-                    value={filters.status}
-                    onValueChange={(value) =>
-                      handleFilterChange("status", value as "active" | "inactive" | "all")
-                    }
-                  >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                      <SelectItem value="all">All</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex flex-wrap gap-2">
-                  {filters.category !== "all" && (
-                    <Badge variant="outline" className="flex gap-1 items-center">
-                      <span>Category: {filters.category}</span>
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("category")} />
-                    </Badge>
-                  )}
-                  {filters.clientType !== "all" && (
-                    <Badge variant="outline" className="flex gap-1 items-center">
-                      <span>Client: {filters.clientType}</span>
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("clientType")} />
-                    </Badge>
-                  )}
-                  {filters.status !== "active" && (
-                    <Badge variant="outline" className="flex gap-1 items-center">
-                      <span>Status: {filters.status}</span>
-                      <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("status")} />
-                    </Badge>
-                  )}
-                </div>
-                {activeFilterCount > 0 && (
-                  <Button variant="ghost" size="sm" onClick={resetFilters}>
-                    Reset All
-                  </Button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Services Grid */}
-      <div className="max-w-6xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {filteredServices.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredServices.map((service) => (
@@ -338,22 +157,18 @@ const Services = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
+          <div className="text-center py-16">
             <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
               <Search className="h-6 w-6 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
-            <p className="text-gray-500 mb-6">
-              Try adjusting your search or filters to find what you're looking for.
+            <p className="text-gray-500 mb-8 max-w-sm mx-auto">
+              {searchTerm ? "Try adjusting your search terms" : "Get started by creating your first service"}
             </p>
-            <div className="space-x-3">
-              <Button variant="outline" onClick={resetFilters}>
-                Clear Filters
-              </Button>
-              <Button onClick={openNewServiceForm}>
-                Create New Service
-              </Button>
-            </div>
+            <Button onClick={openNewServiceForm} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Service
+            </Button>
           </div>
         )}
       </div>
@@ -370,10 +185,10 @@ const Services = () => {
       <Dialog open={isFormOpen} onOpenChange={(open) => !open && closeServiceForm()}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editingService ? "Edit Service" : "Create New Service"}
+            <DialogTitle className="text-xl font-semibold">
+              {editingService ? "Edit Service" : "Create Service"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-gray-500">
               {editingService
                 ? "Update the details for this service"
                 : "Fill in the details to create a new service"}
@@ -402,102 +217,86 @@ interface ServiceCardProps {
 const ServiceCard: React.FC<ServiceCardProps> = ({ service, onClick, onEdit }) => {
   return (
     <Card 
-      className="group cursor-pointer border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white"
+      className="group cursor-pointer bg-white border-0 shadow-sm hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden"
       onClick={onClick}
     >
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-1">
+            <CardTitle className="text-lg font-semibold text-gray-900 mb-2 line-clamp-1">
               {service.name}
             </CardTitle>
-            <div className="flex items-center gap-2 mt-2">
-              {service.category && (
-                <Badge variant="secondary" className="text-xs">
-                  {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
-                </Badge>
-              )}
-              {service.isActive === false ? (
-                <Badge variant="outline" className="text-xs text-gray-500">
-                  Inactive
-                </Badge>
-              ) : (
-                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">
-                  Active
-                </Badge>
-              )}
-            </div>
+            {service.category && (
+              <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600 border-0 rounded-full px-2 py-1">
+                {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
+              </Badge>
+            )}
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full h-8 w-8"
             onClick={(e) => {
               e.stopPropagation();
               onEdit();
             }}
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4 text-gray-500" />
           </Button>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Price - Most Important Info */}
+        {/* Price - Most Important */}
         <div>
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-bold text-gray-900">
               {formatCurrency(service.price)}
             </span>
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 font-medium">
               {service.priceType === "hourly"
                 ? "/ hour"
                 : service.priceType === "sqft"
                 ? "/ sq ft"
-                : "flat rate"}
+                : ""}
             </span>
           </div>
         </div>
 
         {/* Key Details */}
-        <div className="space-y-2">
+        {service.defaultDuration && (
           <div className="flex items-center text-sm text-gray-600">
             <Clock className="h-4 w-4 mr-2 text-gray-400" />
             <span>
               {service.defaultDuration < 60
                 ? `${service.defaultDuration} mins`
-                : `${service.defaultDuration / 60} hr${service.defaultDuration > 60 ? "s" : ""}`}
+                : `${Math.floor(service.defaultDuration / 60)}h ${service.defaultDuration % 60 > 0 ? `${service.defaultDuration % 60}m` : ""}`}
             </span>
           </div>
-          
-          <div className="flex items-center text-sm text-gray-600">
-            <Users className="h-4 w-4 mr-2 text-gray-400" />
-            <span>
-              {service.clientType === "both"
-                ? "All Clients"
-                : service.clientType === "residential"
-                ? "Residential"
-                : "Commercial"}
-            </span>
-          </div>
+        )}
+
+        <div className="flex items-center text-sm text-gray-600">
+          <Users className="h-4 w-4 mr-2 text-gray-400" />
+          <span>
+            {service.clientType === "both"
+              ? "All clients"
+              : service.clientType === "residential"
+              ? "Residential"
+              : "Commercial"}
+          </span>
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-gray-500 line-clamp-2">
-          {service.description}
-        </p>
-
         {/* View Details Indicator */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-xs text-gray-400">Tap for details</span>
-          <ChevronRight className="h-4 w-4 text-gray-300" />
+        <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+          <span className="text-xs text-gray-400 font-medium">Tap for details</span>
+          <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-400 transition-colors" />
         </div>
       </CardContent>
     </Card>
   );
 };
 
-// Clean Service Details Dialog (iOS Settings inspired)
+// iOS Settings Style Service Details Dialog
 interface ServiceDetailsDialogProps {
   service: Service | null;
   open: boolean;
@@ -513,56 +312,35 @@ const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
 }) => {
   if (!service) return null;
 
-  const DetailRow = ({ label, value, action }: {
-    label: string;
-    value: string;
-    action?: () => void;
-  }) => (
-    <div 
-      className={`flex justify-between items-center py-3 px-4 hover:bg-gray-50 ${
-        action ? 'cursor-pointer' : ''
-      }`}
-      onClick={action}
-    >
-      <span className="text-gray-600">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-gray-900 font-medium">{value}</span>
-        {action && <ChevronRight className="h-4 w-4 text-gray-400" />}
-      </div>
+  const DetailRow = ({ label, value }: { label: string; value: string }) => (
+    <div className="flex justify-between items-center py-4 px-0">
+      <span className="text-gray-600 font-medium">{label}</span>
+      <span className="text-gray-900 font-semibold text-right">{value}</span>
     </div>
   );
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader className="text-left">
-          <DialogTitle className="text-xl font-semibold">{service.name}</DialogTitle>
-          <DialogDescription className="text-gray-500">
+      <DialogContent className="max-w-2xl rounded-xl">
+        <DialogHeader className="text-left pb-2">
+          <DialogTitle className="text-2xl font-bold text-gray-900">{service.name}</DialogTitle>
+          <DialogDescription className="text-gray-600 text-base leading-relaxed">
             {service.description}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Status & Category */}
-          <div className="flex items-center gap-2">
-            {service.category && (
-              <Badge variant="secondary">
+          {/* Category Badge */}
+          {service.category && (
+            <div>
+              <Badge className="bg-blue-50 text-blue-700 border-blue-200 rounded-full px-3 py-1">
                 {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
               </Badge>
-            )}
-            {service.isActive === false ? (
-              <Badge variant="outline" className="text-gray-500">
-                Inactive
-              </Badge>
-            ) : (
-              <Badge className="bg-green-100 text-green-800 border-green-200">
-                Active
-              </Badge>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Essential Details */}
-          <div className="bg-gray-50 rounded-lg divide-y divide-gray-200">
+          <div className="bg-gray-50 rounded-xl p-4 space-y-0 divide-y divide-gray-200">
             <DetailRow
               label="Price"
               value={`${formatCurrency(service.price)} ${
@@ -570,19 +348,21 @@ const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
                   ? "/ hour"
                   : service.priceType === "sqft"
                   ? "/ sq ft"
-                  : "flat rate"
+                  : ""
               }`}
             />
-            <DetailRow
-              label="Duration"
-              value={
-                service.defaultDuration < 60
-                  ? `${service.defaultDuration} minutes`
-                  : `${service.defaultDuration / 60} hour${
-                      service.defaultDuration > 60 ? "s" : ""
-                    }`
-              }
-            />
+            {service.defaultDuration && (
+              <DetailRow
+                label="Duration"
+                value={
+                  service.defaultDuration < 60
+                    ? `${service.defaultDuration} minutes`
+                    : `${Math.floor(service.defaultDuration / 60)} hour${Math.floor(service.defaultDuration / 60) > 1 ? "s" : ""}${
+                        service.defaultDuration % 60 > 0 ? ` ${service.defaultDuration % 60} min` : ""
+                      }`
+                }
+              />
+            )}
             <DetailRow
               label="Client Type"
               value={
@@ -596,41 +376,39 @@ const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
           </div>
 
           {/* Tasks */}
-          <div>
-            <h3 className="font-medium text-gray-900 mb-3">Tasks Included</h3>
-            <div className="space-y-2">
-              {service.tasks.map((task, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 text-sm text-gray-700"
-                >
-                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full flex-shrink-0" />
-                  <span>{task}</span>
-                </div>
-              ))}
+          {service.tasks && service.tasks.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">Tasks Included</h3>
+              <div className="space-y-3">
+                {service.tasks.map((task, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
+                    <span className="text-gray-700 leading-relaxed">{task}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Supplies */}
-          <div>
-            <h3 className="font-medium text-gray-900 mb-3">Required Supplies</h3>
-            <div className="space-y-2">
-              {service.requiredSupplies.map((supply, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 text-sm text-gray-700"
-                >
-                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0" />
-                  <span>{supply}</span>
-                </div>
-              ))}
+          {service.requiredSupplies && service.requiredSupplies.length > 0 && (
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 text-lg">Required Supplies</h3>
+              <div className="space-y-3">
+                {service.requiredSupplies.map((supply, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full mt-2 flex-shrink-0" />
+                    <span className="text-gray-700 leading-relaxed">{supply}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <Button variant="outline" onClick={onClose} className="flex-1">
+        <div className="flex gap-3 pt-6 border-t border-gray-100">
+          <Button variant="outline" onClick={onClose} className="flex-1 h-11 rounded-lg">
             Close
           </Button>
           <Button 
@@ -638,7 +416,7 @@ const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
               onClose();
               onEdit(service);
             }}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 rounded-lg"
           >
             <Edit className="h-4 w-4 mr-2" />
             Edit Service
