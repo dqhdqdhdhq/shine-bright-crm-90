@@ -7,7 +7,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -29,10 +28,11 @@ import {
   Edit,
   Plus,
   Search,
-  ListFilter,
-  Package,
-  LayoutGrid,
-  List as ListIcon,
+  Filter,
+  X,
+  ChevronRight,
+  Clock,
+  Users,
 } from "lucide-react";
 import {
   ClientType,
@@ -41,24 +41,13 @@ import {
   mockServices,
 } from "@/data/mockData";
 import { formatCurrency } from "@/lib/utils";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import ServiceForm from "@/components/services/ServiceForm";
 import { useToast } from "@/components/ui/use-toast";
-
-type ViewMode = "card" | "list";
 
 // Filter options
 type FilterState = {
   category: ServiceCategory | "all";
   clientType: ClientType | "both" | "all";
-  priceType: Service["priceType"] | "all";
   status: "active" | "inactive" | "all";
 };
 
@@ -66,12 +55,11 @@ const Services = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("card");
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     category: "all",
     clientType: "all",
-    priceType: "all",
-    status: "all",
+    status: "active", // Default to active services only
   });
   const [services, setServices] = useState<Service[]>(mockServices);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -86,7 +74,8 @@ const Services = () => {
   const filteredServices = useMemo(() => {
     return services.filter((service) => {
       // Search filter
-      const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           service.description.toLowerCase().includes(searchTerm.toLowerCase());
       
       // Category filter
       const matchesCategory = 
@@ -98,19 +87,23 @@ const Services = () => {
         service.clientType === filters.clientType || 
         service.clientType === "both";
       
-      // Price type filter
-      const matchesPriceType =
-        filters.priceType === "all" || service.priceType === filters.priceType;
-      
       // Status filter
       const matchesStatus =
         filters.status === "all" ||
         (filters.status === "active" && service.isActive !== false) ||
         (filters.status === "inactive" && service.isActive === false);
       
-      return matchesSearch && matchesCategory && matchesClientType && matchesPriceType && matchesStatus;
+      return matchesSearch && matchesCategory && matchesClientType && matchesStatus;
     });
   }, [searchTerm, filters, services]);
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.category !== "all") count++;
+    if (filters.clientType !== "all") count++;
+    if (filters.status !== "active") count++; // active is default
+    return count;
+  }, [filters]);
 
   const handleServiceClick = (service: Service) => {
     setSelectedService(service);
@@ -136,11 +129,7 @@ const Services = () => {
   };
 
   const handleSaveService = (serviceData: any) => {
-    // In a real app, we would make API calls here
-    // For this example, we'll just update the local state
-    
     if (editingService) {
-      // Update existing service
       setServices((prev) => 
         prev.map((s) => (s.id === editingService.id ? { ...serviceData, id: editingService.id } : s))
       );
@@ -149,10 +138,9 @@ const Services = () => {
         description: `${serviceData.name} has been updated successfully.`,
       });
     } else {
-      // Create new service
       const newService = {
         ...serviceData,
-        id: `service-${Date.now()}`, // Generate a unique ID
+        id: `service-${Date.now()}`,
         createdAt: new Date().toISOString(),
       };
       setServices((prev) => [...prev, newService]);
@@ -161,8 +149,6 @@ const Services = () => {
         description: `${serviceData.name} has been created successfully.`,
       });
     }
-    
-    // Close the form dialog
     setIsFormOpen(false);
   };
 
@@ -177,383 +163,200 @@ const Services = () => {
     setFilters({
       category: "all",
       clientType: "all",
-      priceType: "all",
-      status: "all",
+      status: "active",
     });
     setSearchTerm("");
+    setShowFilters(false);
+  };
+
+  const clearFilter = (key: keyof FilterState) => {
+    if (key === "status") {
+      setFilters((prev) => ({ ...prev, [key]: "active" }));
+    } else {
+      setFilters((prev) => ({ ...prev, [key]: "all" }));
+    }
   };
 
   return (
-    <div className="space-y-6 py-6 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Services</h1>
-          <p className="text-muted-foreground">
-            Manage your cleaning service offerings.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => setViewMode(viewMode === "card" ? "list" : "card")}
-            className="h-9 w-9"
-          >
-            {viewMode === "card" ? (
-              <ListIcon className="h-4 w-4" />
-            ) : (
-              <LayoutGrid className="h-4 w-4" />
-            )}
-          </Button>
-          <Button className="gap-2" onClick={openNewServiceForm}>
-            <Plus className="h-4 w-4" />
-            <span>Add New Service</span>
-          </Button>
+    <div className="min-h-screen bg-gray-50/50">
+      {/* Clean Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold text-gray-900">Services</h1>
+              <p className="text-gray-500 mt-1">
+                {filteredServices.length} {filteredServices.length === 1 ? 'service' : 'services'}
+              </p>
+            </div>
+            <Button 
+              onClick={openNewServiceForm}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Service
+            </Button>
+          </div>
+
+          {/* Smart Search Bar */}
+          <div className="mt-6 flex items-center gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="search"
+                placeholder="Search services..."
+                className="pl-10 border-gray-200 bg-white"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`gap-2 ${activeFilterCount > 0 ? 'bg-blue-50 border-blue-200 text-blue-700' : ''}`}
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {activeFilterCount > 0 && (
+                <Badge variant="secondary" className="ml-1 h-5 w-5 rounded-full p-0 text-xs">
+                  {activeFilterCount}
+                </Badge>
+              )}
+            </Button>
+          </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Category</label>
+                  <Select
+                    value={filters.category}
+                    onValueChange={(value) =>
+                      handleFilterChange("category", value as ServiceCategory | "all")
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Client Type</label>
+                  <Select
+                    value={filters.clientType}
+                    onValueChange={(value) =>
+                      handleFilterChange("clientType", value as ClientType | "both" | "all")
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="residential">Residential</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                      <SelectItem value="both">Both</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">Status</label>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) =>
+                      handleFilterChange("status", value as "active" | "inactive" | "all")
+                    }
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="all">All</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-4">
+                <div className="flex flex-wrap gap-2">
+                  {filters.category !== "all" && (
+                    <Badge variant="outline" className="flex gap-1 items-center">
+                      <span>Category: {filters.category}</span>
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("category")} />
+                    </Badge>
+                  )}
+                  {filters.clientType !== "all" && (
+                    <Badge variant="outline" className="flex gap-1 items-center">
+                      <span>Client: {filters.clientType}</span>
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("clientType")} />
+                    </Badge>
+                  )}
+                  {filters.status !== "active" && (
+                    <Badge variant="outline" className="flex gap-1 items-center">
+                      <span>Status: {filters.status}</span>
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => clearFilter("status")} />
+                    </Badge>
+                  )}
+                </div>
+                {activeFilterCount > 0 && (
+                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                    Reset All
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="relative col-span-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search services..."
-            className="pl-8 w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="col-span-1">
-          <Select
-            value={filters.category}
-            onValueChange={(value) =>
-              handleFilterChange("category", value as ServiceCategory | "all")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="col-span-1">
-          <Select
-            value={filters.clientType}
-            onValueChange={(value) =>
-              handleFilterChange("clientType", value as ClientType | "both" | "all")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Client Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Client Types</SelectItem>
-              <SelectItem value="residential">Residential</SelectItem>
-              <SelectItem value="commercial">Commercial</SelectItem>
-              <SelectItem value="both">Both</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="col-span-1">
-          <Select
-            value={filters.status}
-            onValueChange={(value) =>
-              handleFilterChange("status", value as "active" | "inactive" | "all")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {(filters.category !== "all" ||
-          filters.clientType !== "all" ||
-          filters.priceType !== "all" ||
-          filters.status !== "all" ||
-          searchTerm !== "") && (
-          <div className="col-span-full flex justify-between items-center mt-2 mb-4">
-            <div className="flex flex-wrap gap-2">
-              {filters.category !== "all" && (
-                <Badge variant="outline" className="flex gap-1 items-center">
-                  <span>Category: {filters.category}</span>
-                </Badge>
-              )}
-              {filters.clientType !== "all" && (
-                <Badge variant="outline" className="flex gap-1 items-center">
-                  <span>Client: {filters.clientType}</span>
-                </Badge>
-              )}
-              {filters.priceType !== "all" && (
-                <Badge variant="outline" className="flex gap-1 items-center">
-                  <span>Price: {filters.priceType}</span>
-                </Badge>
-              )}
-              {filters.status !== "all" && (
-                <Badge variant="outline" className="flex gap-1 items-center">
-                  <span>Status: {filters.status}</span>
-                </Badge>
-              )}
-              {searchTerm && (
-                <Badge variant="outline" className="flex gap-1 items-center">
-                  <span>Search: {searchTerm}</span>
-                </Badge>
-              )}
+      {/* Services Grid */}
+      <div className="max-w-6xl mx-auto px-6 py-6">
+        {filteredServices.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredServices.map((service) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                onClick={() => handleServiceClick(service)}
+                onEdit={() => openEditServiceForm(service)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <Search className="h-6 w-6 text-gray-400" />
             </div>
-            <Button variant="ghost" size="sm" onClick={resetFilters}>
-              Reset Filters
-            </Button>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No services found</h3>
+            <p className="text-gray-500 mb-6">
+              Try adjusting your search or filters to find what you're looking for.
+            </p>
+            <div className="space-x-3">
+              <Button variant="outline" onClick={resetFilters}>
+                Clear Filters
+              </Button>
+              <Button onClick={openNewServiceForm}>
+                Create New Service
+              </Button>
+            </div>
           </div>
         )}
       </div>
-
-      {viewMode === "card" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.length > 0 ? (
-            filteredServices.map((service) => (
-              <Card
-                key={service.id}
-                className={`transition-all hover:shadow-md cursor-pointer ${
-                  !service.isActive ? "opacity-70" : ""
-                }`}
-                style={{
-                  borderLeftColor: service.color,
-                  borderLeftWidth: "8px",
-                }}
-                onClick={() => handleServiceClick(service)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{service.name}</CardTitle>
-                      <CardDescription className="line-clamp-2 mt-1">
-                        {service.description}
-                      </CardDescription>
-                    </div>
-                    {service.category && (
-                      <Badge variant="secondary" className="ml-2">
-                        {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-muted-foreground">Price</span>
-                    <div className="flex items-center">
-                      <span className="text-2xl font-bold">
-                        {formatCurrency(service.price)}
-                      </span>
-                      <span className="text-muted-foreground ml-2">
-                        {service.priceType === "hourly"
-                          ? "/ hour"
-                          : service.priceType === "sqft"
-                          ? "/ sq ft"
-                          : "flat rate"}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-muted-foreground">Duration</span>
-                    <span>
-                      {service.defaultDuration < 60
-                        ? `${service.defaultDuration} minutes`
-                        : `${service.defaultDuration / 60} hour${
-                            service.defaultDuration > 60 ? "s" : ""
-                          }`}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex flex-col space-y-1">
-                      <span className="text-sm text-muted-foreground">Client Type</span>
-                      <Badge
-                        variant={
-                          service.clientType === "residential"
-                            ? "outline"
-                            : service.clientType === "commercial"
-                            ? "secondary"
-                            : "default"
-                        }
-                      >
-                        {service.clientType === "both"
-                          ? "All Clients"
-                          : service.clientType === "residential"
-                          ? "Residential"
-                          : "Commercial"}
-                      </Badge>
-                    </div>
-
-                    {service.isActive === false && (
-                      <Badge variant="outline" className="text-muted-foreground">
-                        Inactive
-                      </Badge>
-                    )}
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEditServiceForm(service);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span>Edit Service</span>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))
-          ) : (
-            <Card className="col-span-full">
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-center text-muted-foreground mb-4">
-                  No services found matching your criteria.
-                </p>
-                <Button variant="outline" onClick={resetFilters}>
-                  Clear Filters
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ) : (
-        <div className="border rounded-md">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[300px]">Service Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Client Type</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredServices.length > 0 ? (
-                filteredServices.map((service) => (
-                  <TableRow 
-                    key={service.id}
-                    className={`cursor-pointer ${!service.isActive ? "opacity-70" : ""}`}
-                    onClick={() => handleServiceClick(service)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center">
-                        <div className="h-8 w-2 rounded-full mr-3" style={{ backgroundColor: service.color }}></div>
-                        <div>
-                          <p className="font-medium">{service.name}</p>
-                          <p className="text-xs text-muted-foreground line-clamp-1">
-                            {service.description}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {service.category && (
-                        <Badge variant="secondary">
-                          {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          service.clientType === "residential"
-                            ? "outline"
-                            : service.clientType === "commercial"
-                            ? "secondary"
-                            : "default"
-                        }
-                      >
-                        {service.clientType === "both"
-                          ? "All Clients"
-                          : service.clientType === "residential"
-                          ? "Residential"
-                          : "Commercial"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {service.defaultDuration < 60
-                        ? `${service.defaultDuration} mins`
-                        : `${service.defaultDuration / 60} hr${
-                            service.defaultDuration > 60 ? "s" : ""
-                          }`}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <span className="font-medium">
-                          {formatCurrency(service.price)}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-1">
-                          {service.priceType === "hourly"
-                            ? "/ hr"
-                            : service.priceType === "sqft"
-                            ? "/ sqft"
-                            : "flat"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {service.isActive === false ? (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Inactive
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          Active
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button 
-                        variant="ghost" 
-                        size="icon"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditServiceForm(service);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
-                    <p className="text-muted-foreground">
-                      No services found matching your criteria.
-                    </p>
-                    <Button variant="link" onClick={resetFilters} className="mt-2">
-                      Clear Filters
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
 
       {/* Service Details Dialog */}
       <ServiceDetailsDialog
@@ -589,6 +392,112 @@ const Services = () => {
   );
 };
 
+// Clean Service Card Component (iOS App Store inspired)
+interface ServiceCardProps {
+  service: Service;
+  onClick: () => void;
+  onEdit: () => void;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({ service, onClick, onEdit }) => {
+  return (
+    <Card 
+      className="group cursor-pointer border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-white"
+      onClick={onClick}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-1">
+              {service.name}
+            </CardTitle>
+            <div className="flex items-center gap-2 mt-2">
+              {service.category && (
+                <Badge variant="secondary" className="text-xs">
+                  {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
+                </Badge>
+              )}
+              {service.isActive === false ? (
+                <Badge variant="outline" className="text-xs text-gray-500">
+                  Inactive
+                </Badge>
+              ) : (
+                <Badge className="text-xs bg-green-100 text-green-800 border-green-200">
+                  Active
+                </Badge>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Price - Most Important Info */}
+        <div>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-bold text-gray-900">
+              {formatCurrency(service.price)}
+            </span>
+            <span className="text-sm text-gray-500">
+              {service.priceType === "hourly"
+                ? "/ hour"
+                : service.priceType === "sqft"
+                ? "/ sq ft"
+                : "flat rate"}
+            </span>
+          </div>
+        </div>
+
+        {/* Key Details */}
+        <div className="space-y-2">
+          <div className="flex items-center text-sm text-gray-600">
+            <Clock className="h-4 w-4 mr-2 text-gray-400" />
+            <span>
+              {service.defaultDuration < 60
+                ? `${service.defaultDuration} mins`
+                : `${service.defaultDuration / 60} hr${service.defaultDuration > 60 ? "s" : ""}`}
+            </span>
+          </div>
+          
+          <div className="flex items-center text-sm text-gray-600">
+            <Users className="h-4 w-4 mr-2 text-gray-400" />
+            <span>
+              {service.clientType === "both"
+                ? "All Clients"
+                : service.clientType === "residential"
+                ? "Residential"
+                : "Commercial"}
+            </span>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-gray-500 line-clamp-2">
+          {service.description}
+        </p>
+
+        {/* View Details Indicator */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <span className="text-xs text-gray-400">Tap for details</span>
+          <ChevronRight className="h-4 w-4 text-gray-300" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Clean Service Details Dialog (iOS Settings inspired)
 interface ServiceDetailsDialogProps {
   service: Service | null;
   open: boolean;
@@ -604,131 +513,134 @@ const ServiceDetailsDialog: React.FC<ServiceDetailsDialogProps> = ({
 }) => {
   if (!service) return null;
 
+  const DetailRow = ({ label, value, action }: {
+    label: string;
+    value: string;
+    action?: () => void;
+  }) => (
+    <div 
+      className={`flex justify-between items-center py-3 px-4 hover:bg-gray-50 ${
+        action ? 'cursor-pointer' : ''
+      }`}
+      onClick={action}
+    >
+      <span className="text-gray-600">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-900 font-medium">{value}</span>
+        {action && <ChevronRight className="h-4 w-4 text-gray-400" />}
+      </div>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{service.name}</DialogTitle>
-          <DialogDescription>Service details and specifications</DialogDescription>
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-xl font-semibold">{service.name}</DialogTitle>
+          <DialogDescription className="text-gray-500">
+            {service.description}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center space-x-2 mt-2">
-          {service.category && (
-            <Badge variant="secondary">
-              {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
-            </Badge>
-          )}
-          {service.isActive === false ? (
-            <Badge variant="outline" className="text-muted-foreground">
-              Inactive
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Active
-            </Badge>
-          )}
-        </div>
+        <div className="space-y-6">
+          {/* Status & Category */}
+          <div className="flex items-center gap-2">
+            {service.category && (
+              <Badge variant="secondary">
+                {service.category.charAt(0).toUpperCase() + service.category.slice(1)}
+              </Badge>
+            )}
+            {service.isActive === false ? (
+              <Badge variant="outline" className="text-gray-500">
+                Inactive
+              </Badge>
+            ) : (
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+                Active
+              </Badge>
+            )}
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium">Description</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {service.description}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium">Price</h3>
-              <div className="flex items-center mt-1">
-                <span className="text-2xl font-bold">
-                  {formatCurrency(service.price)}
-                </span>
-                <span className="text-muted-foreground ml-2">
-                  {service.priceType === "hourly"
-                    ? "/ hour"
-                    : service.priceType === "sqft"
-                    ? "/ sq ft"
-                    : "flat rate"}
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium">Default Duration</h3>
-              <p className="text-sm mt-1">
-                {service.defaultDuration < 60
+          {/* Essential Details */}
+          <div className="bg-gray-50 rounded-lg divide-y divide-gray-200">
+            <DetailRow
+              label="Price"
+              value={`${formatCurrency(service.price)} ${
+                service.priceType === "hourly"
+                  ? "/ hour"
+                  : service.priceType === "sqft"
+                  ? "/ sq ft"
+                  : "flat rate"
+              }`}
+            />
+            <DetailRow
+              label="Duration"
+              value={
+                service.defaultDuration < 60
                   ? `${service.defaultDuration} minutes`
                   : `${service.defaultDuration / 60} hour${
                       service.defaultDuration > 60 ? "s" : ""
-                    }`}
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium">Client Type</h3>
-              <Badge
-                className="mt-1"
-                variant={
-                  service.clientType === "residential"
-                    ? "outline"
-                    : service.clientType === "commercial"
-                    ? "secondary"
-                    : "default"
-                }
-              >
-                {service.clientType === "both"
+                    }`
+              }
+            />
+            <DetailRow
+              label="Client Type"
+              value={
+                service.clientType === "both"
                   ? "All Clients"
                   : service.clientType === "residential"
                   ? "Residential"
-                  : "Commercial"}
-              </Badge>
+                  : "Commercial"
+              }
+            />
+          </div>
+
+          {/* Tasks */}
+          <div>
+            <h3 className="font-medium text-gray-900 mb-3">Tasks Included</h3>
+            <div className="space-y-2">
+              {service.tasks.map((task, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 text-sm text-gray-700"
+                >
+                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full flex-shrink-0" />
+                  <span>{task}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium mb-2">Tasks Included</h3>
-              <ul className="space-y-1">
-                {service.tasks.map((task, index) => (
-                  <li
-                    key={index}
-                    className="text-sm flex items-center gap-2 before:content-['•'] before:text-primary"
-                  >
-                    <span>{task}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium mb-2">Required Supplies</h3>
-              <ul className="space-y-1">
-                {service.requiredSupplies.map((supply, index) => (
-                  <li
-                    key={index}
-                    className="text-sm flex items-center gap-2 before:content-['•'] before:text-primary"
-                  >
-                    <span>{supply}</span>
-                  </li>
-                ))}
-              </ul>
+          {/* Supplies */}
+          <div>
+            <h3 className="font-medium text-gray-900 mb-3">Required Supplies</h3>
+            <div className="space-y-2">
+              {service.requiredSupplies.map((supply, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 text-sm text-gray-700"
+                >
+                  <div className="w-1.5 h-1.5 bg-gray-400 rounded-full flex-shrink-0" />
+                  <span>{supply}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>
+        {/* Actions */}
+        <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <Button variant="outline" onClick={onClose} className="flex-1">
             Close
           </Button>
           <Button 
-            className="gap-2"
             onClick={() => {
               onClose();
               onEdit(service);
             }}
+            className="flex-1 bg-blue-600 hover:bg-blue-700"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4 mr-2" />
             Edit Service
           </Button>
         </div>
