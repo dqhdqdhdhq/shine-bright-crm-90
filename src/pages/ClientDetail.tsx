@@ -1,747 +1,292 @@
+
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { 
-  CalendarDays, Edit, Mail, MapPin, Phone, Plus, ArrowLeft, AlertCircle,
-  MessageSquare, FileText, Clock, DollarSign, Repeat, PenTool
+  ArrowLeft, CalendarDays, Phone, Mail, MapPin, 
+  ChevronRight, Clock, DollarSign, MessageSquare
 } from 'lucide-react';
-import { getClientById, getJobsByClientId, getStaffById } from '@/data/mockData';
+import { getClientById, getJobsByClientId } from '@/data/mockData';
 import { formatPhoneNumber, getInitials } from '@/lib/utils';
 import NotFound from './NotFound';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { useForm } from 'react-hook-form';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const client = id ? getClientById(id) : undefined;
   const clientJobs = id ? getJobsByClientId(id) : [];
   
-  const [activeTab, setActiveTab] = useState('overview');
-  const [showCommunicationDialog, setShowCommunicationDialog] = useState(false);
-  const [communicationType, setCommunicationType] = useState('');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
-  // Setup form for communication dialog
-  const communicationForm = useForm({
-    defaultValues: {
-      subject: '',
-      message: '',
-      callNotes: '',
-      duration: '',
-      noteType: ''
-    }
-  });
-  
   if (!client) {
     return <NotFound />;
   }
 
-  // Calculate key metrics
-  const totalJobs = clientJobs.length;
-  const completedJobs = clientJobs.filter(job => job.status === 'completed').length;
-  // Using a mock amount value since the Job type doesn't have an amount field
-  const totalBilled = clientJobs.reduce((sum, job) => {
-    // For display purposes, we'll use a mock value of $100 per job
-    const jobAmount = 100; // Mock value
-    return sum + jobAmount;
-  }, 0);
-  const avgJobValue = totalJobs > 0 ? totalBilled / totalJobs : 0;
-  const lastServiceDate = client.lastService || 'Never';
-
-  // Mock communication log data
-  const communicationLog = [
-    { type: 'email', date: '2023-04-28', content: 'Sent reminder about upcoming cleaning service', user: 'Jane Operator' },
-    { type: 'call', date: '2023-04-26', content: 'Client requested extra attention to kitchen area', user: 'Mark Manager' },
-    { type: 'note', date: '2023-04-22', content: 'Updated client preferences for cleaning products', user: 'Sarah Admin' },
-    { type: 'sms', date: '2023-04-20', content: 'Confirmed appointment for April 28', user: 'System' },
-    { type: 'job', date: '2023-04-15', content: 'Completed regular cleaning service', user: 'Cleaning Team' },
-  ];
-
   const primaryContact = client.contacts.find(c => c.isPrimary) || client.contacts[0];
   const primaryAddress = client.addresses[0];
+  const nextJob = clientJobs.find(job => job.status === 'scheduled');
+  const completedJobs = clientJobs.filter(job => job.status === 'completed').length;
 
-  const handleQuickAction = (action, type) => {
-    setCommunicationType(type);
-    setShowCommunicationDialog(true);
+  const toggleSection = (section: string) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(section)) {
+      newExpanded.delete(section);
+    } else {
+      newExpanded.add(section);
+    }
+    setExpandedSections(newExpanded);
   };
 
-  // Helper function to get staff names from IDs
-  const getStaffNames = (staffIds) => {
-    if (!staffIds || staffIds.length === 0) return 'Unassigned';
-    return staffIds.map(id => {
-      const staff = getStaffById(id);
-      return staff ? staff.name : 'Unknown';
-    }).join(', ');
-  };
+  const InfoRow = ({ icon: Icon, label, value, action, clickable = false }: {
+    icon: any;
+    label: string;
+    value: string;
+    action?: () => void;
+    clickable?: boolean;
+  }) => (
+    <div 
+      className={`flex items-center justify-between py-3 px-4 hover:bg-gray-50 transition-colors ${
+        clickable ? 'cursor-pointer' : ''
+      }`}
+      onClick={action}
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-gray-600" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-900">{label}</p>
+          <p className="text-sm text-gray-500">{value}</p>
+        </div>
+      </div>
+      {clickable && <ChevronRight className="h-4 w-4 text-gray-400" />}
+    </div>
+  );
 
-  const handleSaveCommunication = (data) => {
-    console.log('Communication data:', data);
-    setShowCommunicationDialog(false);
-    communicationForm.reset();
+  const SectionCard = ({ title, children, expandable = false, sectionKey }: {
+    title: string;
+    children: React.ReactNode;
+    expandable?: boolean;
+    sectionKey?: string;
+  }) => {
+    const isExpanded = sectionKey ? expandedSections.has(sectionKey) : true;
+    
+    return (
+      <Card className="border-0 shadow-sm bg-white">
+        <CardHeader 
+          className={`pb-2 ${expandable ? 'cursor-pointer' : ''}`}
+          onClick={() => expandable && sectionKey && toggleSection(sectionKey)}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold text-gray-900">{title}</CardTitle>
+            {expandable && (
+              <ChevronRight className={`h-4 w-4 text-gray-400 transition-transform ${
+                isExpanded ? 'rotate-90' : ''
+              }`} />
+            )}
+          </div>
+        </CardHeader>
+        {isExpanded && (
+          <CardContent className="pt-0">
+            {children}
+          </CardContent>
+        )}
+      </Card>
+    );
   };
 
   return (
-    <div className="space-y-6 py-6 animate-fade-in">
-      <div className="flex items-center gap-4">
-        <Link to="/clients">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">{client.name}</h1>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant={client.type === 'residential' ? 'outline' : 'secondary'}>
-              {client.type === 'residential' ? 'Residential' : 'Commercial'}
-            </Badge>
-            {client.tags.map(tag => (
-              <Badge key={tag} variant="outline">
-                {tag}
-              </Badge>
-            ))}
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Link to="/clients">
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarFallback className="text-lg font-semibold">
+                    {getInitials(client.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h1 className="text-2xl font-semibold text-gray-900">{client.name}</h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Badge variant={client.type === 'residential' ? 'outline' : 'secondary'}>
+                      {client.type === 'residential' ? 'Residential' : 'Commercial'}
+                    </Badge>
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                      Active
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <CalendarDays className="h-4 w-4 mr-2" />
+              Schedule Job
+            </Button>
           </div>
         </div>
-        <Button variant="outline" className="gap-2">
-          <Edit className="h-4 w-4" />
-          Edit
-        </Button>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Schedule Job
-        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full md:w-auto">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="jobs">Jobs History</TabsTrigger>
-          <TabsTrigger value="billing">Billing</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="contacts">Contacts</TabsTrigger>
-          <TabsTrigger value="addresses">Addresses</TabsTrigger>
-          <TabsTrigger value="files">Files</TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="space-y-4 mt-6">
-          {/* Quick Actions Bar */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-2 flex-wrap">
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleQuickAction('Log a call with client', 'call')}>
-                <Phone className="h-4 w-4" />
-                Log Call
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleQuickAction('Send email to client', 'email')}>
-                <Mail className="h-4 w-4" />
-                Send Email
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1" onClick={() => handleQuickAction('Add a note about client', 'note')}>
-                <PenTool className="h-4 w-4" />
-                Add Note
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1">
-                <FileText className="h-4 w-4" />
-                Create Task
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1">
-                <CalendarDays className="h-4 w-4" />
-                Schedule Job
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1">
-                <DollarSign className="h-4 w-4" />
-                Generate Invoice
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Key Metrics Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Key Metrics</CardTitle>
-              <CardDescription>Client performance at a glance</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">Lifetime Value</p>
-                  <p className="text-2xl font-bold mt-1">${totalBilled}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">Avg. Job Value</p>
-                  <p className="text-2xl font-bold mt-1">${avgJobValue.toFixed(2)}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">Jobs Completed</p>
-                  <p className="text-2xl font-bold mt-1">{completedJobs}/{totalJobs}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">Client Since</p>
-                  <p className="text-2xl font-bold mt-1">{client.createdAt.split(' ')[0]}</p>
-                </div>
-                <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-sm text-muted-foreground">Last Service</p>
-                  <p className="text-2xl font-bold mt-1">{lastServiceDate.split(' ')[0] || 'Never'}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Contact Information */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Contact Information</CardTitle>
-                <CardDescription>Primary and additional contacts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {client.contacts.map((contact, index) => (
-                    <div key={index} className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar>
-                          <AvatarFallback>{getInitials(contact.name)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{contact.name}</p>
-                          {contact.isPrimary && (
-                            <Badge variant="outline" className="text-xs mt-0.5">
-                              Primary Contact
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div className="ml-11 space-y-2">
-                        <div className="flex items-center text-sm">
-                          <Mail className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <a href={`mailto:${contact.email}`} className="text-primary">
-                            {contact.email}
-                          </a>
-                        </div>
-                        <div className="flex items-center text-sm">
-                          <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                          <a href={`tel:${contact.phone}`} className="text-primary">
-                            {formatPhoneNumber(contact.phone)}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Service Addresses */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Service Addresses</CardTitle>
-                <CardDescription>Locations for cleaning services</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {client.addresses.map((address, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-medium">
-                          {index === 0 ? 'Primary Address' : `Address ${index + 1}`}
-                        </p>
-                        <p className="text-sm mt-1">{address.street}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {address.city}, {address.state} {address.zipCode}
-                        </p>
-                        <div className="mt-2">
-                          <a 
-                            href={`https://maps.google.com/?q=${encodeURIComponent(
-                              `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
-                            )}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary"
-                          >
-                            View on Map
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-            
-            {/* Client Info */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Client Details</CardTitle>
-                <CardDescription>Additional information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Client Since</p>
-                  <div className="flex items-center text-sm">
-                    <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {client.createdAt}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Last Service</p>
-                  <div className="flex items-center text-sm">
-                    <CalendarDays className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {client.lastService || "No services yet"}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Payment Method</p>
-                  <p className="text-sm">
-                    {client.billingInfo?.paymentMethod || "Not set"}
-                    {client.billingInfo?.accountNumber && (
-                      <span className="text-muted-foreground ml-2">
-                        ({client.billingInfo.accountNumber})
-                      </span>
-                    )}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Content */}
+      <div className="max-w-4xl mx-auto px-6 py-6 space-y-6">
+        {/* Summary Section - Always Visible */}
+        <SectionCard title="Summary">
+          <div className="space-y-0 divide-y divide-gray-100">
+            <InfoRow
+              icon={Phone}
+              label="Phone"
+              value={formatPhoneNumber(primaryContact.phone)}
+              action={() => window.open(`tel:${primaryContact.phone}`)}
+              clickable
+            />
+            <InfoRow
+              icon={Mail}
+              label="Email"
+              value={primaryContact.email}
+              action={() => window.open(`mailto:${primaryContact.email}`)}
+              clickable
+            />
+            <InfoRow
+              icon={MapPin}
+              label="Address"
+              value={`${primaryAddress.street}, ${primaryAddress.city}`}
+            />
+            {nextJob ? (
+              <InfoRow
+                icon={CalendarDays}
+                label="Next Service"
+                value={`${nextJob.date} at ${nextJob.startTime}`}
+                clickable
+              />
+            ) : (
+              <InfoRow
+                icon={CalendarDays}
+                label="Next Service"
+                value="None scheduled"
+              />
+            )}
           </div>
-          
-          {/* Communication Log */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Communication Log</CardTitle>
-              <CardDescription>Recent interactions with client</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {communicationLog.map((log, index) => (
-                  <div key={index} className="flex items-start gap-4 pb-4 border-b last:border-0 last:pb-0">
-                    <div className="bg-muted p-2 rounded-full">
-                      {log.type === 'email' && <Mail className="h-4 w-4" />}
-                      {log.type === 'call' && <Phone className="h-4 w-4" />}
-                      {log.type === 'note' && <PenTool className="h-4 w-4" />}
-                      {log.type === 'sms' && <MessageSquare className="h-4 w-4" />}
-                      {log.type === 'job' && <CalendarDays className="h-4 w-4" />}
-                    </div>
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">
-                          {log.type === 'email' && 'Email'}
-                          {log.type === 'call' && 'Phone Call'}
-                          {log.type === 'note' && 'Note Added'}
-                          {log.type === 'sms' && 'SMS Message'}
-                          {log.type === 'job' && 'Job Update'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{log.date}</span>
-                      </div>
-                      <p className="text-sm">{log.content}</p>
-                      <p className="text-xs text-muted-foreground">{log.user}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Client Notes & Preferences */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Notes & Preferences</CardTitle>
-              <CardDescription>Special instructions for this client</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Important Notes</AlertTitle>
-                <AlertDescription>
-                  {client.notes || "No special notes for this client."}
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          </Card>
-          
-          {/* Upcoming Jobs */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Upcoming Jobs</CardTitle>
-                  <CardDescription>Scheduled cleaning services</CardDescription>
-                </div>
-                <Button variant="outline" size="sm">View All</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {clientJobs.filter(job => job.status === 'scheduled').length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  No upcoming jobs scheduled.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {clientJobs
-                    .filter(job => job.status === 'scheduled')
-                    .map(job => (
-                      <div key={job.id} className="flex items-center justify-between border-b pb-4">
-                        <div>
-                          <p className="font-medium">{job.serviceName}</p>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <CalendarDays className="mr-2 h-4 w-4" />
-                            {job.date} at {job.startTime}
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm">View</Button>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="jobs" className="space-y-4 mt-6">
-          <Card>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle>Job History</CardTitle>
-                <CardDescription>All jobs for {client.name}</CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">Filter</Button>
-                <Button variant="outline" size="sm">Date Range</Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {clientJobs.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  No job history found for this client.
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Service</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Staff</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {clientJobs.map(job => (
-                        <TableRow key={job.id}>
-                          <TableCell className="font-medium">{job.serviceName}</TableCell>
-                          <TableCell>{job.date}</TableCell>
-                          <TableCell>{job.startTime} - {job.endTime}</TableCell>
-                          <TableCell>{getStaffNames(job.assignedStaffIds)}</TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={
-                                job.status === 'completed' ? 'default' : 
-                                job.status === 'in-progress' ? 'secondary' : 
-                                job.status === 'cancelled' ? 'destructive' : 
-                                'outline'
-                              }
-                            >
-                              {job.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>$100</TableCell>
-                          <TableCell className="text-right space-x-2">
-                            <Button variant="ghost" size="sm">View</Button>
-                            <Button variant="ghost" size="sm" className="gap-1">
-                              <Repeat className="h-3 w-3" />
-                              Repeat
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="billing" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Billing Information</CardTitle>
-              <CardDescription>Payment history and invoices</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-8">
-              <div className="flex items-center justify-between pb-4 border-b">
-                <div>
-                  <h3 className="font-medium">Payment Method</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {client.billingInfo?.paymentMethod || "No payment method on file"}
-                    {client.billingInfo?.accountNumber && ` (${client.billingInfo.accountNumber})`}
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">Update</Button>
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-4">Recent Invoices</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {clientJobs.length > 0 ? (
-                      clientJobs.slice(0, 5).map((job, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{job.date}</TableCell>
-                          <TableCell>INV-{1000 + index}</TableCell>
-                          <TableCell>$100</TableCell>
-                          <TableCell>
-                            <Badge variant={
-                              index % 3 === 0 ? "default" : 
-                              index % 3 === 1 ? "secondary" : 
-                              "outline"
-                            }>
-                              {index % 3 === 0 ? "Paid" : 
-                               index % 3 === 1 ? "Sent" : 
-                               "Draft"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">View</Button>
-                            <Button variant="ghost" size="sm">Download</Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                          No invoice history available.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-4">Payment History</h3>
-                {clientJobs.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Reference</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {clientJobs.slice(0, 3).map((job, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{job.date}</TableCell>
-                          <TableCell>$100</TableCell>
-                          <TableCell>{index % 2 === 0 ? "Credit Card" : "Bank Transfer"}</TableCell>
-                          <TableCell>REF-{2000 + index}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    No payment history available.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="notes" className="mt-6">
-          <Card>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <CardTitle>Client Notes</CardTitle>
-                <CardDescription>Special instructions and preferences</CardDescription>
-              </div>
-              <div>
-                <Button>Add Note</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {client.notes ? (
-                <div className="space-y-4">
-                  <div className="border rounded-md p-4">
-                    <div className="flex justify-between mb-2">
-                      <Badge>Important</Badge>
-                      <span className="text-xs text-muted-foreground">Added on April 28, 2023</span>
-                    </div>
-                    <p className="whitespace-pre-wrap mb-2">
-                      {client.notes}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Added by Jane Operator</p>
-                  </div>
-                  
-                  <div className="border rounded-md p-4">
-                    <div className="flex justify-between mb-2">
-                      <Badge variant="outline">Service Instructions</Badge>
-                      <span className="text-xs text-muted-foreground">Added on March 15, 2023</span>
-                    </div>
-                    <p className="whitespace-pre-wrap mb-2">
-                      Client prefers eco-friendly cleaning products only. Please ensure all surfaces are properly wiped down, with special attention to glass surfaces.
-                    </p>
-                    <p className="text-xs text-muted-foreground">Added by Mark Manager</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  No notes available for this client.
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+        </SectionCard>
 
-        {/* Other tabs rendered with placeholder content */}
-        {['contacts', 'addresses', 'files', 'activity'].map((tab) => (
-          <TabsContent key={tab} value={tab} className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{tab.charAt(0).toUpperCase() + tab.slice(1)}</CardTitle>
-                <CardDescription>This tab is under development</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12 text-muted-foreground">
-                  <p className="mb-2">This section is coming soon</p>
-                  <p className="text-sm">We're working on adding more features to help you manage your clients better.</p>
+        {/* Quick Stats */}
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-6">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-gray-900">{completedJobs}</div>
+                <div className="text-sm text-gray-500">Jobs Completed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-gray-900">${completedJobs * 100}</div>
+                <div className="text-sm text-gray-500">Total Billed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-semibold text-gray-900">
+                  {client.createdAt.split(' ')[0]}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
+                <div className="text-sm text-gray-500">Client Since</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Communication Dialog */}
-      <Dialog open={showCommunicationDialog} onOpenChange={setShowCommunicationDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{communicationType}</DialogTitle>
-            <DialogDescription>
-              Enter the details below to record this communication.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Form {...communicationForm}>
-            <form onSubmit={communicationForm.handleSubmit(handleSaveCommunication)} className="space-y-4 py-4">
-              {communicationType === 'email' && (
-                <>
-                  <FormField
-                    control={communicationForm.control}
-                    name="subject"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subject</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Email subject" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={communicationForm.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Email content" className="min-h-[100px]" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-              {communicationType === 'call' && (
-                <>
-                  <FormField
-                    control={communicationForm.control}
-                    name="callNotes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Call Notes</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Notes from the call" className="min-h-[100px]" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={communicationForm.control}
-                    name="duration"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Call Duration</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Duration in minutes" type="number" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-              {communicationType === 'note' && (
-                <>
-                  <FormField
-                    control={communicationForm.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Note</FormLabel>
-                        <FormControl>
-                          <Textarea placeholder="Add your note here" className="min-h-[100px]" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={communicationForm.control}
-                    name="noteType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Note Type</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Type of note" {...field} />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </>
-              )}
-              
-              <DialogFooter>
-                <Button variant="outline" type="button" onClick={() => setShowCommunicationDialog(false)}>Cancel</Button>
-                <Button type="submit">Save</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+        {/* Progressive Disclosure Sections */}
+        <SectionCard 
+          title="Contact Details" 
+          expandable 
+          sectionKey="contacts"
+        >
+          <div className="space-y-4">
+            {client.contacts.map((contact, index) => (
+              <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <Avatar>
+                  <AvatarFallback>{getInitials(contact.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium">{contact.name}</p>
+                  {contact.isPrimary && (
+                    <Badge variant="outline" className="text-xs mt-1">Primary</Badge>
+                  )}
+                  <p className="text-sm text-gray-500">{contact.email}</p>
+                  <p className="text-sm text-gray-500">{formatPhoneNumber(contact.phone)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+
+        <SectionCard 
+          title="Service History" 
+          expandable 
+          sectionKey="history"
+        >
+          <div className="space-y-3">
+            {clientJobs.length > 0 ? (
+              clientJobs.slice(0, 5).map((job) => (
+                <div key={job.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{job.serviceName}</p>
+                    <p className="text-sm text-gray-500">{job.date} at {job.startTime}</p>
+                  </div>
+                  <Badge variant={
+                    job.status === 'completed' ? 'default' : 
+                    job.status === 'scheduled' ? 'secondary' : 'outline'
+                  }>
+                    {job.status}
+                  </Badge>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">No service history yet</p>
+            )}
+          </div>
+        </SectionCard>
+
+        <SectionCard 
+          title="Billing & Payments" 
+          expandable 
+          sectionKey="billing"
+        >
+          <div className="space-y-0 divide-y divide-gray-100">
+            <InfoRow
+              icon={DollarSign}
+              label="Payment Method"
+              value={client.billingInfo?.paymentMethod || "Not set"}
+            />
+            <InfoRow
+              icon={Clock}
+              label="Current Balance"
+              value="$0.00"
+            />
+            <InfoRow
+              icon={MessageSquare}
+              label="Billing Preferences"
+              value="Email invoices"
+            />
+          </div>
+        </SectionCard>
+
+        <SectionCard 
+          title="Notes & Preferences" 
+          expandable 
+          sectionKey="notes"
+        >
+          <div className="p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+            <p className="text-sm text-blue-800">
+              {client.notes || "No special notes or preferences recorded."}
+            </p>
+          </div>
+        </SectionCard>
+      </div>
     </div>
   );
 };
