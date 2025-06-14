@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -251,21 +250,24 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ service, onClick, onEdit }) =
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {/* Price - Prominent */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-gray-900">
-              {formatCurrency(service.price)}
-            </span>
-            {service.priceType && service.priceType !== "fixed" && (
-              <span className="text-sm text-gray-600 font-medium">
-                {service.priceType === "hourly"
-                  ? "/ hour"
-                  : service.priceType === "sqft"
-                  ? "/ sq ft"
-                  : ""}
+        {/* Price Display - Enhanced with gradient */}
+        <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl p-4 border border-blue-100">
+          <div className="flex items-baseline justify-between">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-gray-900">
+                {formatCurrency(service.price)}
               </span>
-            )}
+              {service.priceType && service.priceType !== "flat" && (
+                <span className="text-sm text-gray-600 font-medium">
+                  {service.priceType === "hourly"
+                    ? "/ hour"
+                    : service.priceType === "sqft"
+                    ? "/ sq ft"
+                    : ""}
+                </span>
+              )}
+            </div>
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
           </div>
         </div>
 
