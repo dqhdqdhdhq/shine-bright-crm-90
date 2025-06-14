@@ -10,7 +10,7 @@ import {
   ChevronRight, Clock, DollarSign, MessageSquare
 } from 'lucide-react';
 import { getClientById, getJobsByClientId } from '@/data/mockData';
-import { formatPhoneNumber, getInitials } from '@/lib/utils';
+import { formatPhoneNumber, getInitials, formatCurrency } from '@/lib/utils';
 import NotFound from './NotFound';
 
 const ClientDetail = () => {
@@ -18,7 +18,7 @@ const ClientDetail = () => {
   const client = id ? getClientById(id) : undefined;
   const clientJobs = id ? getJobsByClientId(id) : [];
   
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary']));
 
   if (!client) {
     return <NotFound />;
@@ -28,6 +28,7 @@ const ClientDetail = () => {
   const primaryAddress = client.addresses[0];
   const nextJob = clientJobs.find(job => job.status === 'scheduled');
   const completedJobs = clientJobs.filter(job => job.status === 'completed').length;
+  const totalBilled = completedJobs * 150; // Using a sample rate of $150/job
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -186,7 +187,7 @@ const ClientDetail = () => {
                 <div className="text-sm text-gray-500">Jobs Completed</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-semibold text-gray-900">${completedJobs * 100}</div>
+                <div className="text-2xl font-semibold text-gray-900">{formatCurrency(totalBilled)}</div>
                 <div className="text-sm text-gray-500">Total Billed</div>
               </div>
               <div className="text-center">
@@ -265,7 +266,7 @@ const ClientDetail = () => {
             <InfoRow
               icon={Clock}
               label="Current Balance"
-              value="$0.00"
+              value={formatCurrency(totalBilled)}
             />
             <InfoRow
               icon={MessageSquare}
